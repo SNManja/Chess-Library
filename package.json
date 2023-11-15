@@ -1,0 +1,20 @@
+{
+  "name": "proyecto-ajedrez",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && node dist/index.js" 
+  },
+  "author": "MonkiManja",
+  "license": "ISC",
+  "dependencies": {
+    "pino": "^8.16.1",
+    "pino-pretty": "^10.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "typescript": "^5.2.2"
+  }
+}
