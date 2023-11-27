@@ -1,11 +1,10 @@
 {
   "name": "proyecto-ajedrez",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
-    "start": "npm run build && node dist/index.js" 
+    "start": "npm run build && node dist/index.js"
   },
   "author": "MonkiManja",
   "license": "ISC",
@@ -16,5 +15,7 @@
   "devDependencies": {
     "@types/node": "^20.9.0",
     "typescript": "^5.2.2"
-  }
+  },
+  "keywords": [],
+  "description": ""
 }

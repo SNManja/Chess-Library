@@ -1,7 +1,6 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.logger = void 0;
-var pino_1 = require("pino");
+
+import pino from "pino";
+
 var levels = {
     crit: 60,
     error: 50,
@@ -10,7 +9,15 @@ var levels = {
     info: 20,
     debug: 10,
 };
-exports.logger = (0, pino_1.default)({
+
+
+
+const logger = pino({
     customLevels: levels,
     level: "debug", // Minimum level to be displayed when logging
-});
+    transport: {
+        target: "pino-pretty"
+    }
+})
+
+export { logger };

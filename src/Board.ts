@@ -1,89 +1,51 @@
-
+import { Piece, pieceFactory } from "./pieces";
 
 class Board {
-    pieceState;
+    pieceState : Array<Piece>;
     kingMoved;
 
-    constructor(PGN) {
+    constructor() {
         this.kingMoved = [false, false]; 
-        this.#createNewBoard();
-        if (PGN != undefined){
-            this.#buildBoard(PGN);
-        } 
+        this.createNewBoard();
     }
 
-    #createNewBoard(){
-        // Here im representing the board with white pieces down and black up
-        let VACIO = null;
-        this.pieceState = [] // 8x8
-        let blackPieces = [["R",1],["N", 1],["B", 1],["Q",1],["K",1],["B", 1],["N", 1],["R",1]] // pieceState[0]
-        let whitePieces = [["R",0],["N", 0],["B", 0],["Q",0],["K",0],["B", 0],["N", 0],["R",0]] // pieceState[7]
-        let fill = [VACIO, VACIO, VACIO,VACIO, VACIO,VACIO,VACIO,VACIO]
-        let blackPawns = [["P",1],["P",1],["P",1],["P",1],["P",1],["P",1],["P",1],["P",1]] // pieceState[1]
-        let whitePawns = [["P",0],["P",0],["P",0],["P",0],["P",0],["P",0],["P",0],["P",0]] // pieceState[6
+    
+    createNewBoard(){
+        this.pieceState = [] 
+        let blackPieces = [pieceFactory["R"](1,"a",8),pieceFactory["N"](1,"b",8),pieceFactory["B"](1,"c",8),pieceFactory["Q"](1,"d",8),
+                            pieceFactory["K"](1,"e",8),pieceFactory["B"](1,"f",8), pieceFactory["N"](1,"g",8),pieceFactory["R"](1,"h",8)] // pieceState[0]
+        let whitePieces = [pieceFactory["R"](1,"a",1),pieceFactory["N"](1,"b",1),pieceFactory["B"](1,"c",1),pieceFactory["Q"](1,"d",1),
+                            pieceFactory["K"](1,"e",1),pieceFactory["B"](1,"f",1), pieceFactory["N"](1,"g",1),pieceFactory["R"](1,"h",1)] 
+        let blackPawns = [pieceFactory["P"](1,"a",7),pieceFactory["P"](1,"b",7),pieceFactory["P"](1,"c",7),pieceFactory["P"](1,"d",7),pieceFactory["P"](1,"e",7),pieceFactory["P"](1,"f",7),pieceFactory["P"](1,"g",7),pieceFactory["P"](1,"h",7)] // pieceState[1]
+        let whitePawns = [pieceFactory["P"](1,"a",2),pieceFactory["P"](1,"b",2),pieceFactory["P"](1,"c",2),pieceFactory["P"](1,"d",2),pieceFactory["P"](1,"e",2),pieceFactory["P"](1,"f",2),pieceFactory["P"](1,"g",2),pieceFactory["P"](1,"h",2)] // pieceState[1]
 
-        this.pieceState[0] = blackPieces;
-        this.pieceState[1] = blackPawns;
-        for (let i = 2; i < 6; i++){
-            this.pieceState[i] = fill;
-        }
-        this.pieceState[6] = whitePawns;
-        this.pieceState[7] = whitePieces;
-    }
-
-    #buildBoard(PGN){
-        for(const moves in PGN.getMovements()){
-            for (let i = 0; i <= 1; i++) {
-                if(isCastling(moves[i],i)){
-
-                } else if(isValidMove(moves[i], i)){
-                    let elemToRemove = movingFrom(moves[i], i)
-                    this.setMove(moves[i], elemToRemove) 
-                } else {
-                    throw new Error("Invalid move in PGN");
-                }
-            }
-        }
-    }
-
-    getPieceTypeFromMove(move){
-        let pieceType;
-        switch (move){
-            case move.toLowerCase(): // isPawn
-                pieceType = "P";
-                break;
-            case "O-O":
-                pieceType = "Castle"
-                break;
-            case "O-O-O":
-                pieceType = "LongCastle"
-                break;
-            default:
-                pieceType = move
-        }
-        return pieceType
-    }
-
-    isValidMove(move, player){
-        // Need to check if there's a piece that can make the move 
-        // So, get the piece type
-        let destination;
-        let takes = false;
-        let pieceType = this.getPieceTypeFromMove(move)
-        if(pieceType === "Castle" || pieceType === "LongCastle"){
-            return isValidToCastle(pieceType, player)
-        }
-        if(move.includes("x")){ // when piece takes 
-            takes = true;
-            destination = move.split("x")[1];
-            return isValidCapture(pieceType, player, destination)
-        } else {
-            return 
+        for(let i = 0; i < 8; i++){
+            this.pieceState.push(blackPieces[i])
+            this.pieceState.push(whitePieces[i])
+            this.pieceState.push(whitePawns[i])
+            this.pieceState.push(blackPawns[i])
         }
     }
 
     getState(){
         return this.pieceState;
+    }
+
+    getBoard(){
+        const board = [];
+        for (let i = 0; i < 8; i++) {
+          board[i] = [];
+          for (let j = 0; j < 8; j++) {
+            board[i][j] = null;
+          }
+        }
+
+        this.pieceState.forEach(piece => {
+            let pos = piece.getPosition().getForMatrix();
+            board[pos[1]][pos[0]] = [piece.getType(), piece.getPlayer()]
+            
+        })
+        return board;
     }
     
 

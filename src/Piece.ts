@@ -1,3 +1,4 @@
+import { Board } from "./Board";
 import { logger } from "./logger";
 
 enum Player {
@@ -41,22 +42,9 @@ class Position {
     }
 }
 
-export interface Piece {
+abstract class Piece {
     player : Player;
     position: Position;
-
-    getMovements() : Position[];
-    getPosition() : Position;
-    getType() : string;
-    setPosition(Position) : void;
-
-}
-
-class Pawn implements Piece {
-    type: string;
-    player: Player;
-    position: Position;
-    moved: boolean
 
     constructor(player: number, column: string, row : number ) {
         try{
@@ -66,17 +54,33 @@ class Pawn implements Piece {
             logger.warn(e.message);
         }
     }
+
+    abstract getType(): string;
+
+    abstract getMovements(board : Board):Position[];
+
+    getPosition(): Position {
+        return this.position;
+    }
+
+    setPosition(position : Position, board : Board): void {
+        try{
+            if(this.getMovements(board).includes(position)){
+                this.position = position;
+            } else {
+                throw new Error("Invalid position")
+            }
+        } catch (e){
+            logger.error(e.message)
+        }
+    }
+}
+
+class Pawn extends Piece {
     getType(): string {
         return "P"
     }
-    getPosition(): Position {
-        return this.position
-    }
-    getPlayer(): number {
-        return this.player
-    }
-
-    getMovements(): Position[] {
+    getMovements(board : Board): Position[] {
         let possibleMovements : Position[] = []
         // This is a piece that can be moved only to the front. So it depends in the player
         // List of things to have in mind:
@@ -88,32 +92,13 @@ class Pawn implements Piece {
         // This will probably be the last piece to implement. Its the hardest by a great margin
         return possibleMovements;
     }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
 }
 
-class Knight implements Piece {
-    position: Position;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
+class Knight extends Piece {
     getType(): string {
         return "N"
     }
-    getPosition(): Position {
-        return this.position;
-    }
-    
-    getMovements(): Position[] {
+    getMovements(board : Board): Position[] {
         let possibleMovements : Position[] = []
         // We know that the knight can do 2 to up down left right and 1 to the sides
         const combinations =  [[2,1],[2,-1],[-2,1],[-2,-1]]
@@ -134,132 +119,47 @@ class Knight implements Piece {
             combinations.push(move);
         }
         return possibleMovements
-    }
-    setPosition(position : Position): void {
-        if(this.getMovements().includes(position)){
-            this.position = position;
-        }
-
-        throw new Error("Method not implemented.");
-    }
-    
+    } 
 }
 
-class Rook implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
-    getType(): string {
-        return "R"
-    }
-    getPosition(): Position {
-        return this.position
-    }
-    
-    getMovements(): Position[] {
-        throw new Error("Method not implemented.");
-    }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
-}
-
-class Bishop implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
-    getType(): string {
-        return "B"
-    }
-    getPosition(): Position {
-        return this.position
-    }
-    
-    getMovements(): Position[] {
-        throw new Error("Method not implemented.");
-    }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
-}
-
-class Queen implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
+class Queen extends Piece {
     getType(): string {
         return "Q"
     }
-    getPosition(): Position {
-        return this.position
+    getMovements(board : Board): Position[] {
+        throw new Error("Method not implemented.");
     }
-   
+}
+
+class Rook  extends Piece {
+    getType(): string {
+        return "R"
+    }
     getMovements(): Position[] {
         throw new Error("Method not implemented.");
     }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
 }
 
-class King implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-    
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
+class Bishop extends Piece {
+    getType(): string {
+        return "B"
     }
+    getMovements(): Position[] {
+        throw new Error("Method not implemented.");
+    }
+}
+
+class King extends Piece {
     getType(): string {
         return "K"
     }
-    getPosition(): Position {
-        return this.position
-    }
-
     getMovements(): Position[] {
         throw new Error("Method not implemented.");
     }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
 }
+
+
+
 
 export const pieceFactory : { [type: string] : (player: number, column: string, row:number ) => Piece } = {
     K: ( player: number, column: string, row:number ) => new King(player, column, row),
