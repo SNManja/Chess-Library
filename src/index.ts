@@ -1,5 +1,6 @@
 import { Board } from "./Board";
 import { PGNtranslator } from "./PGNTranslator";
+import { Position } from "./pieces";
 
 
 let xd = new PGNtranslator(`[Event "Live Chess"]
@@ -25,20 +26,8 @@ Nce4 16. Nxe4 Nxe4 17. Bc3 Bxc3 18. bxc3 Bf5 19. Qb3 Nc5 20. Qb4 Qc7 21. Bb5 a6
 
 let testBoard = new Board();
 
-let iterar = testBoard.getBoard()
+let pos = new Position("a",8)
 
-console.log(iterar)
-/*
-iterar.forEach(l => {
-    let str 
-    l.forEach(elem => {
-        if(elem == null){
-            str+=("_")
-        } else {
-            str+=(elem)
-        }
-    })
-    console.log(str)
-})
-*/
+console.log(testBoard.getPieceInPosition(pos).getMovements());
+
 

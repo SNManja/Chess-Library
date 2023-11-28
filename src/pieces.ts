@@ -5,9 +5,10 @@ enum Player {
     black = 1
 }
 
-class Position {
+export class Position {
+    column: string;
     row: number;
-    column: string  ;
+    
     
     constructor(column: string, row: number){
         try {
@@ -19,11 +20,10 @@ class Position {
             this.row = row;
             this.column = column;
         } catch(e){
-
-            logger.warn(e.message);
+            logger.error(e.message);
         }
     }
-
+    
 
     getRow() : number {
         return this.row;
@@ -39,227 +39,205 @@ class Position {
         res[1] = this.row-1
         return res
     }
+    compareValue(): number { // This function maps into the position into a value to be compared against another position.
+        // We have from a-h and as a secondary value 1-8
+        return ((this.column.charCodeAt(0)-"a".charCodeAt(0)+1)*10  + this.row)
+    }
+
+    // diagonal positions 
+    getDiagonalPositions(len : number = 8): Position[] {
+        let res : Position[] = [];
+
+        let pp : Position[] = []; // plus plus
+        let pm : Position[] = []; // plus minus
+        let mp : Position[] = []; // minus plus
+        let mm : Position[] = []; // minus minus
+
+        for(let i : number = 1; i <= len; i++) {
+
+            // This part is strange, but it serves a purpose. 
+            // If the value is defined it will be pushed MANTAINING ORDER
+            let aux = movementCalculator(this,i,i)
+            aux != undefined ? pp.push(aux) : undefined;
+
+            aux = movementCalculator(this,i,-i)
+            aux != undefined ? pm.push(aux) : undefined;
+
+            aux = movementCalculator(this,-i,i)
+            aux != undefined ? mp.unshift(aux) : undefined;
+
+            aux = movementCalculator(this,-i,-i)
+            aux != undefined ? mm.unshift(aux) : undefined;
+
+           
+        }
+        res = res.concat(mm).concat(mp).concat(pm).concat(pp)  
+
+        return res
+    }
+
+    // orthogonal positions 
+    getOrthogonalPositions(len : number = 8): Position[] {
+        let res : Position[] = [];
+
+        let right : Position[] = []; // plus plus
+        let up : Position[] = []; // plus minus
+        let down : Position[] = []; // minus plus
+        let left : Position[] = []; // minus minus
+
+        for(let i : number = 1; i <= len; i++) {
+
+            // This part is strange, but it serves a purpose. 
+            // If the value is defined it will be pushed MANTAINING ORDER
+            let aux : Position= movementCalculator(this,i,0)
+            console.log("pos: ", movementCalculator(this,i,0))
+            aux != undefined ? right.push(aux) : undefined;
+
+            aux = movementCalculator(this,0,i)
+            aux != undefined ? up.push(aux) : undefined;
+
+            aux = movementCalculator(this,0,-i)
+            aux != undefined ? down.unshift(aux) : undefined;
+
+            aux = movementCalculator(this,-i,0)
+            aux != undefined ? left.unshift(aux) : undefined;
+
+           
+        }
+        res = res.concat(left).concat(down).concat(up).concat(right)  
+        return res
+    }
+
+    getPawnPositions(moved : boolean, player : number) : Position[]{
+        let selector : number;
+        player == 1 ? selector = -1 : selector = 1; // Selector determines player
+        let res : Position[] = []
+        let aux;
+        if(moved) {
+            aux = movementCalculator(this,0,selector*2)
+            aux != undefined ? res.push(aux) : undefined;
+        }
+
+        aux = movementCalculator(this,0,selector)
+        aux != undefined ? res.push(aux) : undefined;
+
+        aux = movementCalculator(this,1,selector*1)
+        aux != undefined ? res.push(aux) : undefined;
+
+        aux = movementCalculator(this,-1,selector*1)
+        aux != undefined ? res.push(aux) : undefined;
+
+        return res;
+    }
 }
 
-export interface Piece {
-    player : Player;
+export abstract class Piece {
+    player : number;
     position: Position;
-
-    getMovements() : Position[];
-    getPosition() : Position;
-    getType() : string;
-    setPosition(Position) : void;
-
-}
-
-class Pawn implements Piece {
-    type: string;
-    player: Player;
-    position: Position;
-    moved: boolean
 
     constructor(player: number, column: string, row : number ) {
         try{
             this.position = new Position(column, row);
-            player = player;
+            this.player = player;
         } catch(e){
             logger.warn(e.message);
         }
     }
-    getType(): string {
-        return "P"
-    }
-    getPosition(): Position {
-        return this.position
-    }
-    getPlayer(): number {
-        return this.player
-    }
 
-    getMovements(): Position[] {
-        let possibleMovements : Position[] = []
-        // This is a piece that can be moved only to the front. So it depends in the player
-        // List of things to have in mind:
-        // - What pieces do the pawn have in front
-        // - If its pawn's first move 
-        // - If the pawn can eat a piece (only side movement)
-        // - in passant. Or however its spelled
+    abstract getType(): string;
 
-        // This will probably be the last piece to implement. Its the hardest by a great margin
-        return possibleMovements;
-    }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
-}
+    abstract getMovements():Position[];
 
-class Knight implements Piece {
-    position: Position;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
-    getType(): string {
-        return "N"
-    }
     getPosition(): Position {
         return this.position;
     }
-    
+
+    setPosition(position : Position): void {
+        try{
+            if(this.getMovements().includes(position)){
+                this.position = position;
+            } else {
+                throw new Error("Invalid position")
+            }
+        } catch (e){
+            logger.error(e.message)
+        }
+    }
+
+    getPlayer(): number {
+        return this.player;
+    }
+ }
+
+class Pawn extends Piece {
+    moved = false;
+    getType(): string {
+        return "P"
+    }
+    getMovements(): Position[] {
+        return this.position.getPawnPositions(this.moved, this.player);
+    }
+}
+
+class Knight extends Piece {
+    getType(): string {
+        return "N"
+    }
     getMovements(): Position[] {
         let possibleMovements : Position[] = []
         // We know that the knight can do 2 to up down left right and 1 to the sides
         const combinations =  [[2,1],[2,-1],[-2,1],[-2,-1]]
         /* [col, row] */
         for (const calc of combinations) {
-            let move = movementCalculator(this.position, calc[0], calc[1])
-            if(move == undefined){
-                continue;
-            }
-            combinations.push(move);
+            let moveColRow = movementCalculator(this.position, calc[0], calc[1])
+            let moveRowCol = movementCalculator(this.position, calc[1], calc[0])
+            moveColRow != undefined ? possibleMovements.push(moveColRow) : undefined; 
+            moveRowCol != undefined ? possibleMovements.push(moveRowCol) : undefined;
         }
-        /* [row, col] */
-        for (const calc of combinations) {
-            let move = movementCalculator(this.position, calc[1], calc[0])
-            if(move == undefined){
-                continue;
-            }
-            combinations.push(move);
-        }
+
         return possibleMovements
-    }
-    setPosition(position : Position): void {
-        if(this.getMovements().includes(position)){
-            this.position = position;
-        }
-
-        throw new Error("Method not implemented.");
-    }
-    
+    } 
 }
 
-class Rook implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
-    getType(): string {
-        return "R"
-    }
-    getPosition(): Position {
-        return this.position
-    }
-    
-    getMovements(): Position[] {
-        throw new Error("Method not implemented.");
-    }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
-}
-
-class Bishop implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
-    getType(): string {
-        return "B"
-    }
-    getPosition(): Position {
-        return this.position
-    }
-    
-    getMovements(): Position[] {
-        throw new Error("Method not implemented.");
-    }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
-}
-
-class Queen implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
-    }
+class Queen extends Piece {
     getType(): string {
         return "Q"
     }
-    getPosition(): Position {
-        return this.position
-    }
-   
     getMovements(): Position[] {
-        throw new Error("Method not implemented.");
+        return this.position.getDiagonalPositions().concat(this.position.getOrthogonalPositions()) // Would be great to return it sorted
     }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
 }
 
-class King implements Piece {
-    position: Position;
-    type: string;
-    player: Player;
-    
-    constructor(player: number, column: string, row : number ) {
-        try{
-            this.position = new Position(column, row);
-            player = player;
-        } catch(e){
-            logger.warn(e.message);
-        }
+class Rook  extends Piece {
+    getType(): string {
+        return "R"
     }
+    getMovements(): Position[] {
+        return this.position.getOrthogonalPositions()
+    }
+}
+
+class Bishop extends Piece {
+    getType(): string {
+        return "B"
+    }
+    getMovements(): Position[] {
+        return this.position.getDiagonalPositions()
+    }
+}
+
+class King extends Piece {
+    // For the moment i'll ignore castling
     getType(): string {
         return "K"
     }
-    getPosition(): Position {
-        return this.position
-    }
-
     getMovements(): Position[] {
-        throw new Error("Method not implemented.");
+        return this.position.getDiagonalPositions(1).concat(this.position.getOrthogonalPositions(1))
     }
-    setPosition(): void {
-        throw new Error("Method not implemented.");
-    }
-    
 }
+
+
+
 
 export const pieceFactory : { [type: string] : (player: number, column: string, row:number ) => Piece } = {
     K: ( player: number, column: string, row:number ) => new King(player, column, row),
@@ -272,14 +250,16 @@ export const pieceFactory : { [type: string] : (player: number, column: string, 
 
 // Dado una posicion, avanza tantos valores en filas y columnas
 function movementCalculator(pos : Position, col : number, row : number) {
+    
     let newRow = pos.getRow() + row;
-    let newColumn = (parseInt(pos.getColumn()) - col).toString();
-    let newPosition
-    try{
-        newPosition = new Position(newColumn, newRow)
-    } catch(e){
-        newPosition = undefined;
-        console.debug("Out of bounds: "+ newColumn+newRow.toString())
-    }        
-    return newPosition
+    let newColumn = String.fromCharCode((pos.getColumn().charCodeAt(0) - col));
+    console.log("aa why " + newColumn);
+    console.log(newRow);
+   
+    if((newColumn >= "a" && newColumn <= "h") && (newRow >= 1 && newRow <= 8)){
+
+        let newPosition : Position = new Position(newColumn, newRow)
+        return newPosition
+    }     
+    return undefined;
 }
