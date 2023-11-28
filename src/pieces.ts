@@ -1,14 +1,34 @@
 import { logger } from "./logger";
 
-enum Player {
-    white = 0,
-    black = 1
+export type direction = 
+     "up" 
+    |"down" 
+    |"right"
+    |"left"
+    |"upLeft"
+    |"upRight"
+    |"downLeft"
+    |"downRight"
+    |"knight"; // The knight
+
+function createDirectionMap(){
+    let res : Record<direction, Position[]> = {
+        "upRight": [],
+        "upLeft": [],
+        "downRight": [],
+        "downLeft": [],
+        "up": [],
+        "down": [],
+        "left": [],
+        "right": [],
+        "knight": [],
+    }
+    return res
 }
 
 export class Position {
     column: string;
     row: number;
-    
     
     constructor(column: string, row: number){
         try {
@@ -23,7 +43,6 @@ export class Position {
             logger.error(e.message);
         }
     }
-    
 
     getRow() : number {
         return this.row;
@@ -45,8 +64,8 @@ export class Position {
     }
 
     // diagonal positions 
-    getDiagonalPositions(len : number = 8): Position[] {
-        let res : Position[] = [];
+    getDiagonalPositions(len : number = 8): Record<direction, Position[]> {
+ 
 
         let pp : Position[] = []; // plus plus
         let pm : Position[] = []; // plus minus
@@ -69,16 +88,22 @@ export class Position {
             aux = movementCalculator(this,-i,-i)
             aux != undefined ? mm.unshift(aux) : undefined;
 
-           
         }
-        res = res.concat(mm).concat(mp).concat(pm).concat(pp)  
 
-        return res
+
+      
+        let res : Record<direction, Position[]> =  createDirectionMap()
+
+        res["upRight"]= pp;
+        res["upLeft"]= pp;
+        res["downRight"]= pm;
+        res["downLeft"]= mm;
+
+        return res;
     }
 
     // orthogonal positions 
-    getOrthogonalPositions(len : number = 8): Position[] {
-        let res : Position[] = [];
+    getOrthogonalPositions(len : number = 8): Record<direction, Position[]> {
 
         let right : Position[] = []; // plus plus
         let up : Position[] = []; // plus minus
@@ -102,38 +127,46 @@ export class Position {
             aux = movementCalculator(this,-i,0)
             aux != undefined ? left.unshift(aux) : undefined;
 
-           
         }
-        res = res.concat(left).concat(down).concat(up).concat(right)  
+        let res : Record<direction, Position[]> = createDirectionMap()
+        res["up"] = up;
+        res["down"] = down;
+        res["left"] = left;
+        res["right"] = right;
+
         return res
     }
 
-    getPawnPositions(moved : boolean, player : number) : Position[]{
+    getPawnPositions(moved : boolean, player : number) : Record<direction, Position[]>{
         let selector : number;
         player == 1 ? selector = -1 : selector = 1; // Selector determines player
-        let res : Position[] = []
+        let res : Record<direction, Position[]> = createDirectionMap()
+        let upOrDown = selector == 1 ? "up" : "down"
         let aux;
         if(moved) {
             aux = movementCalculator(this,0,selector*2)
-            aux != undefined ? res.push(aux) : undefined;
+            aux != undefined ? res[upOrDown].push(aux) : undefined;
         }
 
         aux = movementCalculator(this,0,selector)
-        aux != undefined ? res.push(aux) : undefined;
+        aux != undefined ? res[upOrDown].push(aux) : undefined;
 
-        aux = movementCalculator(this,1,selector*1)
-        aux != undefined ? res.push(aux) : undefined;
+        aux = movementCalculator(this,1,selector)
+        aux != undefined ? res[upOrDown.concat("Right")].push(aux) : undefined;
 
-        aux = movementCalculator(this,-1,selector*1)
-        aux != undefined ? res.push(aux) : undefined;
+        aux = movementCalculator(this,-1,selector)
+        aux != undefined ? res[upOrDown.concat("Left")].push(aux) : undefined;
 
-        return res;
+
+        return res
     }
+
 }
 
 export abstract class Piece {
     player : number;
     position: Position;
+    cached : Record<direction, Position[]>;
 
     constructor(player: number, column: string, row : number ) {
         try{
@@ -146,22 +179,15 @@ export abstract class Piece {
 
     abstract getType(): string;
 
-    abstract getMovements():Position[];
+    abstract getMovements(): Record<direction, Position[]>;
 
     getPosition(): Position {
         return this.position;
     }
 
     setPosition(position : Position): void {
-        try{
-            if(this.getMovements().includes(position)){
-                this.position = position;
-            } else {
-                throw new Error("Invalid position")
-            }
-        } catch (e){
-            logger.error(e.message)
-        }
+        this.position = position; // The error handling has to be made with the board
+        this.cached = undefined;
     }
 
     getPlayer(): number {
@@ -174,7 +200,7 @@ class Pawn extends Piece {
     getType(): string {
         return "P"
     }
-    getMovements(): Position[] {
+    getMovements(): Record<direction, Position[]> {
         return this.position.getPawnPositions(this.moved, this.player);
     }
 }
@@ -183,18 +209,21 @@ class Knight extends Piece {
     getType(): string {
         return "N"
     }
-    getMovements(): Position[] {
-        let possibleMovements : Position[] = []
+    getMovements(): Record<direction, Position[]> {
+        if (this.cached != undefined){
+            return this.cached
+        }
+        let possibleMovements : Record<direction, Position[]> = createDirectionMap()
         // We know that the knight can do 2 to up down left right and 1 to the sides
         const combinations =  [[2,1],[2,-1],[-2,1],[-2,-1]]
         /* [col, row] */
         for (const calc of combinations) {
             let moveColRow = movementCalculator(this.position, calc[0], calc[1])
             let moveRowCol = movementCalculator(this.position, calc[1], calc[0])
-            moveColRow != undefined ? possibleMovements.push(moveColRow) : undefined; 
-            moveRowCol != undefined ? possibleMovements.push(moveRowCol) : undefined;
+            moveColRow != undefined ? possibleMovements["knight"].push(moveColRow) : undefined; 
+            moveRowCol != undefined ? possibleMovements["knight"].push(moveRowCol) : undefined;
         }
-
+        this.cached = possibleMovements
         return possibleMovements
     } 
 }
@@ -203,8 +232,9 @@ class Queen extends Piece {
     getType(): string {
         return "Q"
     }
-    getMovements(): Position[] {
-        return this.position.getDiagonalPositions().concat(this.position.getOrthogonalPositions()) // Would be great to return it sorted
+    getMovements():Record<direction, Position[]> {
+        this.cached != undefined ? undefined : this.cached = { ...this.position.getDiagonalPositions(), ...(this.position.getOrthogonalPositions())}
+        return this.cached
     }
 }
 
@@ -212,8 +242,9 @@ class Rook  extends Piece {
     getType(): string {
         return "R"
     }
-    getMovements(): Position[] {
-        return this.position.getOrthogonalPositions()
+    getMovements(): Record<direction, Position[]>{
+        this.cached != undefined ? undefined : this.cached = this.position.getOrthogonalPositions()
+        return this.cached;
     }
 }
 
@@ -221,8 +252,9 @@ class Bishop extends Piece {
     getType(): string {
         return "B"
     }
-    getMovements(): Position[] {
-        return this.position.getDiagonalPositions()
+    getMovements(): Record<direction, Position[]> {
+        this.cached != undefined ? undefined : this.cached = this.position.getDiagonalPositions()
+        return this.cached
     }
 }
 
@@ -231,12 +263,11 @@ class King extends Piece {
     getType(): string {
         return "K"
     }
-    getMovements(): Position[] {
-        return this.position.getDiagonalPositions(1).concat(this.position.getOrthogonalPositions(1))
+    getMovements(): Record<direction, Position[]> {
+        this.cached != undefined ? undefined : this.cached = { ...this.position.getDiagonalPositions(1), ...(this.position.getOrthogonalPositions(1))}
+        return this.cached
     }
 }
-
-
 
 
 export const pieceFactory : { [type: string] : (player: number, column: string, row:number ) => Piece } = {

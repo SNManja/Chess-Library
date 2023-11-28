@@ -28,6 +28,6 @@ let testBoard = new Board();
 
 let pos = new Position("a",8)
 
-console.log(testBoard.getPieceInPosition(pos).getMovements());
+console.log(testBoard.getBoard());
 
 

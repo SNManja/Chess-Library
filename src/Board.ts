@@ -1,8 +1,8 @@
-import { Piece, pieceFactory, Position } from "./pieces";
+
+import { Piece, Position, direction, pieceFactory } from "./pieces";
 
 class Board {
     pieceState : Array<Piece>;
-    kingMoved;
 
     constructor() {
         this.createNewBoard();
@@ -71,9 +71,63 @@ class Board {
         return binarySearch(this.pieceState, pos)
 
     }
-    
 
+    getMoves(pos: Position) : Record<direction, Position[]>{
+        let piece = this.getPieceInPosition(pos); // O(log n)
+        let movements : Record<direction, Position[]> = piece.getMovements(); // depends in piece.getMovements and board length. So its O(1) in any case
+        movements = FilterFactory.getFilteredMovements(piece, this)
 
+        return movements
+    }
+}
+
+class FilterFactory {
+    static getFilteredMovements(piece: Piece, board : Board) : Record<direction, Position[]>{
+        switch(piece.getType()){
+            case "K": {
+                return FilterFactory.filterKing(piece, board)
+            } 
+            case "Q": {
+                return FilterFactory.filterQueen(piece, board)
+            }
+            case "R": {
+                return FilterFactory.filterRook(piece, board)
+            }
+            case "K": {
+                return FilterFactory.filterKnight(piece, board)
+            }
+            case "B": {
+                return FilterFactory.filterBishop(piece, board)
+            }
+            case "P": { 
+                return FilterFactory.filterPawn(piece, board)
+            }
+        }
+    }
+
+    static filterKing(piece : Piece, board : Board) : Record<direction, Position[]> {
+        return piece.getMovements()
+    }
+
+    static filterQueen(piece : Piece, board : Board) : Record<direction, Position[]> {
+        return piece.getMovements()
+    }
+
+    static filterRook(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return piece.getMovements()
+    }
+
+    static filterKnight(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return piece.getMovements() // Only one that doesnt need anything
+    }
+
+    static filterBishop(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return piece.getMovements()
+    }
+
+    static filterPawn(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return piece.getMovements() // This is a special one. 
+    }
 }
 
 export { Board };
