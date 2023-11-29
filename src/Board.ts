@@ -74,7 +74,7 @@ class Board {
 
     getMoves(pos: Position) : Record<direction, Position[]>{
         let piece = this.getPieceInPosition(pos); // O(log n)
-        let movements : Record<direction, Position[]> = piece.getMovements(); // depends in piece.getMovements and board length. So its O(1) in any case
+        let movements : Record<direction, Position[]>; // depends in piece.getMovements and board length. So its O(1) in any case
         movements = FilterFactory.getFilteredMovements(piece, this)
 
         return movements
@@ -84,49 +84,74 @@ class Board {
 class FilterFactory {
     static getFilteredMovements(piece: Piece, board : Board) : Record<direction, Position[]>{
         switch(piece.getType()){
-            case "K": {
-                return FilterFactory.filterKing(piece, board)
-            } 
-            case "Q": {
-                return FilterFactory.filterQueen(piece, board)
-            }
-            case "R": {
-                return FilterFactory.filterRook(piece, board)
-            }
-            case "K": {
-                return FilterFactory.filterKnight(piece, board)
-            }
-            case "B": {
-                return FilterFactory.filterBishop(piece, board)
-            }
-            case "P": { 
-                return FilterFactory.filterPawn(piece, board)
-            }
+            case "K": return FilterFactory.filterKing(piece, board)
+            case "Q": return FilterFactory.filterQueen(piece, board)
+            case "R": return FilterFactory.filterRook(piece, board)
+            case "N": return FilterFactory.filterKnight(piece, board)
+            case "B": return FilterFactory.filterBishop(piece, board)
+            case "P": return FilterFactory.filterPawn(piece, board)
         }
     }
 
-    static filterKing(piece : Piece, board : Board) : Record<direction, Position[]> {
-        return piece.getMovements()
+    private static filterKing(piece : Piece, board : Board) : Record<direction, Position[]> {
+        // At the time im not interested if the king walks into his death
+        // So ill ignore cases of check
+        return this.directionFilter(piece, board)
     }
 
-    static filterQueen(piece : Piece, board : Board) : Record<direction, Position[]> {
-        return piece.getMovements()
+    private static filterQueen(piece : Piece, board : Board) : Record<direction, Position[]> {
+        return this.directionFilter(piece, board)
     }
 
-    static filterRook(piece : Piece, board : Board) : Record<direction, Position[]>{
-        return piece.getMovements()
+    private static filterRook(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return this.directionFilter(piece, board)
     }
 
-    static filterKnight(piece : Piece, board : Board) : Record<direction, Position[]>{
-        return piece.getMovements() // Only one that doesnt need anything
+    private static filterKnight(piece : Piece, board : Board) : Record<direction, Position[]>{
+        let movements = piece.getMovements()
+        let toDelete : number[] = []
+
+        for(let i = 0; i < movements["knight"].length; i++){
+
+            let pieceInPosition = board.getPieceInPosition(movements["knight"][i]) 
+            if((pieceInPosition != undefined) &&  pieceInPosition.getPlayer() == piece.getPlayer()){
+                toDelete.unshift(i)
+            }
+        }
+        toDelete.forEach(i => {
+            movements["knight"].splice(i,1)
+        })
+        return movements 
     }
 
-    static filterBishop(piece : Piece, board : Board) : Record<direction, Position[]>{
-        return piece.getMovements()
+    private static filterBishop(piece : Piece, board : Board) : Record<direction, Position[]>{
+        return this.directionFilter(piece, board)
     }
 
-    static filterPawn(piece : Piece, board : Board) : Record<direction, Position[]>{
+    private static filterPawn(piece : Piece, board : Board) : Record<direction, Position[]>{
         return piece.getMovements() // This is a special one. 
+    }
+
+    // Here i mantained the aliasing.
+    // It good for me to modify the cached values in movements
+    private static directionFilter(piece : Piece, board : Board) : Record<direction, Position[]> {
+        let movements: Record<direction, Position[]> = piece.getMovements();
+    
+        for (const dir of ["up", "down", "left", "right", "upLeft", "upRight", "downLeft", "downRight"]) {
+            let cap = movements[dir].length;
+
+            for(let i = 0 ; i < cap ;i++){
+                let pieceInPosition = board.getPieceInPosition(movements[dir][i])
+                if (pieceInPosition != undefined){ 
+                    // This checks if its an enemy, in which case enemy could be eaten
+                    piece.getPlayer() == pieceInPosition.getPlayer() ? cap = i : cap = i+1; 
+                }
+            }
+            movements[dir] = movements[dir].slice(0,cap)
+        }
+
+
+        return movements
     }
 }
 

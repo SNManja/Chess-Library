@@ -9,9 +9,9 @@ export type direction =
     |"upRight"
     |"downLeft"
     |"downRight"
-    |"knight"; // The knight
+    |"knight"; 
 
-function createDirectionMap(){
+export function createDirectionMap(){
     let res : Record<direction, Position[]> = {
         "upRight": [],
         "upLeft": [],
@@ -83,10 +83,10 @@ export class Position {
             aux != undefined ? pm.push(aux) : undefined;
 
             aux = movementCalculator(this,-i,i)
-            aux != undefined ? mp.unshift(aux) : undefined;
+            aux != undefined ? mp.push(aux) : undefined;
 
             aux = movementCalculator(this,-i,-i)
-            aux != undefined ? mm.unshift(aux) : undefined;
+            aux != undefined ? mm.push(aux) : undefined;
 
         }
 
@@ -122,10 +122,10 @@ export class Position {
             aux != undefined ? up.push(aux) : undefined;
 
             aux = movementCalculator(this,0,-i)
-            aux != undefined ? down.unshift(aux) : undefined;
+            aux != undefined ? down.push(aux) : undefined;
 
             aux = movementCalculator(this,-i,0)
-            aux != undefined ? left.unshift(aux) : undefined;
+            aux != undefined ? left.push(aux) : undefined;
 
         }
         let res : Record<direction, Position[]> = createDirectionMap()
@@ -284,8 +284,6 @@ function movementCalculator(pos : Position, col : number, row : number) {
     
     let newRow = pos.getRow() + row;
     let newColumn = String.fromCharCode((pos.getColumn().charCodeAt(0) - col));
-    console.log("aa why " + newColumn);
-    console.log(newRow);
    
     if((newColumn >= "a" && newColumn <= "h") && (newRow >= 1 && newRow <= 8)){
 

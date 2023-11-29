@@ -26,8 +26,10 @@ Nce4 16. Nxe4 Nxe4 17. Bc3 Bxc3 18. bxc3 Bf5 19. Qb3 Nc5 20. Qb4 Qc7 21. Bb5 a6
 
 let testBoard = new Board();
 
-let pos = new Position("a",8)
+let pos = new Position("b",8)
+let piece = testBoard.getPieceInPosition(pos)
 
-console.log(testBoard.getBoard());
 
+console.log(testBoard.getMoves(pos))
+console.log(piece.getMovements());
 
