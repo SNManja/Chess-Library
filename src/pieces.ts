@@ -1,177 +1,17 @@
+import { Position, directionMap } from "./Position";
 import { logger } from "./logger";
 
-export type direction = 
-     "up" 
-    |"down" 
-    |"right"
-    |"left"
-    |"upLeft"
-    |"upRight"
-    |"downLeft"
-    |"downRight"
-    |"knight"; 
-
-export function createDirectionMap(){
-    let res : Record<direction, Position[]> = {
-        "upRight": [],
-        "upLeft": [],
-        "downRight": [],
-        "downLeft": [],
-        "up": [],
-        "down": [],
-        "left": [],
-        "right": [],
-        "knight": [],
-    }
-    return res
-}
-
-export class Position {
-    column: string;
-    row: number;
-    
-    constructor(column: string, row: number){
-        try {
-            if(!(column >= "a" && column <= "h")){
-                throw new Error("Invalid column: " + column);
-            } else if (!(row >= 1 && row <= 8)){
-                throw new Error("Invalid row: " + row);
-            }
-            this.row = row;
-            this.column = column;
-        } catch(e){
-            logger.error(e.message);
-        }
-    }
-
-    getRow() : number {
-        return this.row;
-    }
-
-    getColumn() : string  {
-        return this.column;
-    }
-
-    getForMatrix() : number[] {
-        let res = [0,0];
-        res[0] = this.column.charCodeAt(0) - "a".charCodeAt(0);
-        res[1] = this.row-1
-        return res
-    }
-    compareValue(): number { // This function maps into the position into a value to be compared against another position.
-        // We have from a-h and as a secondary value 1-8
-        return ((this.column.charCodeAt(0)-"a".charCodeAt(0)+1)*10  + this.row)
-    }
-
-    // diagonal positions 
-    getDiagonalPositions(len : number = 8): Record<direction, Position[]> {
- 
-
-        let pp : Position[] = []; // plus plus
-        let pm : Position[] = []; // plus minus
-        let mp : Position[] = []; // minus plus
-        let mm : Position[] = []; // minus minus
-
-        for(let i : number = 1; i <= len; i++) {
-
-            // This part is strange, but it serves a purpose. 
-            // If the value is defined it will be pushed MANTAINING ORDER
-            let aux = movementCalculator(this,i,i)
-            aux != undefined ? pp.push(aux) : undefined;
-
-            aux = movementCalculator(this,i,-i)
-            aux != undefined ? pm.push(aux) : undefined;
-
-            aux = movementCalculator(this,-i,i)
-            aux != undefined ? mp.push(aux) : undefined;
-
-            aux = movementCalculator(this,-i,-i)
-            aux != undefined ? mm.push(aux) : undefined;
-
-        }
-
-
-      
-        let res : Record<direction, Position[]> =  createDirectionMap()
-
-        res["upRight"]= pp;
-        res["upLeft"]= pp;
-        res["downRight"]= pm;
-        res["downLeft"]= mm;
-
-        return res;
-    }
-
-    // orthogonal positions 
-    getOrthogonalPositions(len : number = 8): Record<direction, Position[]> {
-
-        let right : Position[] = []; // plus plus
-        let up : Position[] = []; // plus minus
-        let down : Position[] = []; // minus plus
-        let left : Position[] = []; // minus minus
-
-        for(let i : number = 1; i <= len; i++) {
-
-            // This part is strange, but it serves a purpose. 
-            // If the value is defined it will be pushed MANTAINING ORDER
-            let aux : Position= movementCalculator(this,i,0)
-            console.log("pos: ", movementCalculator(this,i,0))
-            aux != undefined ? right.push(aux) : undefined;
-
-            aux = movementCalculator(this,0,i)
-            aux != undefined ? up.push(aux) : undefined;
-
-            aux = movementCalculator(this,0,-i)
-            aux != undefined ? down.push(aux) : undefined;
-
-            aux = movementCalculator(this,-i,0)
-            aux != undefined ? left.push(aux) : undefined;
-
-        }
-        let res : Record<direction, Position[]> = createDirectionMap()
-        res["up"] = up;
-        res["down"] = down;
-        res["left"] = left;
-        res["right"] = right;
-
-        return res
-    }
-
-    getPawnPositions(moved : boolean, player : number) : Record<direction, Position[]>{
-        let selector : number;
-        player == 1 ? selector = -1 : selector = 1; // Selector determines player
-        let res : Record<direction, Position[]> = createDirectionMap()
-        let upOrDown = selector == 1 ? "up" : "down"
-        let aux;
-        if(moved) {
-            aux = movementCalculator(this,0,selector*2)
-            aux != undefined ? res[upOrDown].push(aux) : undefined;
-        }
-
-        aux = movementCalculator(this,0,selector)
-        aux != undefined ? res[upOrDown].push(aux) : undefined;
-
-        aux = movementCalculator(this,1,selector)
-        aux != undefined ? res[upOrDown.concat("Right")].push(aux) : undefined;
-
-        aux = movementCalculator(this,-1,selector)
-        aux != undefined ? res[upOrDown.concat("Left")].push(aux) : undefined;
-
-
-        return res
-    }
-
-}
 
 export abstract class Piece {
     player : number;
     position: Position;
-    cached : Record<direction, Position[]>;
+    cached : directionMap;
 
     constructor(player: number, column: string, row : number ) {
         try{
             this.position = new Position(column, row);
             this.player = player;
+            this.cached = undefined;
         } catch(e){
             logger.warn(e.message);
         }
@@ -179,19 +19,35 @@ export abstract class Piece {
 
     abstract getType(): string;
 
-    abstract getMovements(): Record<direction, Position[]>;
+    abstract getMovements(): directionMap;
 
     getPosition(): Position {
         return this.position;
     }
 
-    setPosition(position : Position): void {
-        this.position = position; // The error handling has to be made with the board
+    setPosition(pos : Position): void {
+        this.position = pos; // The error handling has to be made with the board
+        logger.debug(`setPosition to ${this.position.getColumn()} ${this.position.getRow()}`)
         this.cached = undefined;
     }
 
     getPlayer(): number {
         return this.player;
+    }
+
+    setCached(dir : directionMap = undefined): void {
+        console.log("setCached")
+        this.cached = dir;
+    }
+
+    getCached(): directionMap {
+        logger.debug("returned cached position")
+        return this.cached;
+    }
+
+    isCached() : boolean {
+        logger.debug(`isCached ${this.cached !== undefined}`); 
+        return this.cached !== undefined ? true : false;
     }
  }
 
@@ -200,7 +56,7 @@ class Pawn extends Piece {
     getType(): string {
         return "P"
     }
-    getMovements(): Record<direction, Position[]> {
+    getMovements(): directionMap {
         return this.position.getPawnPositions(this.moved, this.player);
     }
 }
@@ -209,22 +65,8 @@ class Knight extends Piece {
     getType(): string {
         return "N"
     }
-    getMovements(): Record<direction, Position[]> {
-        if (this.cached != undefined){
-            return this.cached
-        }
-        let possibleMovements : Record<direction, Position[]> = createDirectionMap()
-        // We know that the knight can do 2 to up down left right and 1 to the sides
-        const combinations =  [[2,1],[2,-1],[-2,1],[-2,-1]]
-        /* [col, row] */
-        for (const calc of combinations) {
-            let moveColRow = movementCalculator(this.position, calc[0], calc[1])
-            let moveRowCol = movementCalculator(this.position, calc[1], calc[0])
-            moveColRow != undefined ? possibleMovements["knight"].push(moveColRow) : undefined; 
-            moveRowCol != undefined ? possibleMovements["knight"].push(moveRowCol) : undefined;
-        }
-        this.cached = possibleMovements
-        return possibleMovements
+    getMovements(): directionMap {
+        return this.position.getKnightPositions()
     } 
 }
 
@@ -232,9 +74,8 @@ class Queen extends Piece {
     getType(): string {
         return "Q"
     }
-    getMovements():Record<direction, Position[]> {
-        this.cached != undefined ? undefined : this.cached = { ...this.position.getDiagonalPositions(), ...(this.position.getOrthogonalPositions())}
-        return this.cached
+    getMovements():directionMap {
+        return this.position.getDiagonalPositions().merge(this.position.getOrthogonalPositions());
     }
 }
 
@@ -242,9 +83,8 @@ class Rook  extends Piece {
     getType(): string {
         return "R"
     }
-    getMovements(): Record<direction, Position[]>{
-        this.cached != undefined ? undefined : this.cached = this.position.getOrthogonalPositions()
-        return this.cached;
+    getMovements(): directionMap{
+        return this.position.getOrthogonalPositions()
     }
 }
 
@@ -252,9 +92,9 @@ class Bishop extends Piece {
     getType(): string {
         return "B"
     }
-    getMovements(): Record<direction, Position[]> {
-        this.cached != undefined ? undefined : this.cached = this.position.getDiagonalPositions()
-        return this.cached
+    getMovements(): directionMap {
+        return this.position.getDiagonalPositions()
+
     }
 }
 
@@ -263,9 +103,8 @@ class King extends Piece {
     getType(): string {
         return "K"
     }
-    getMovements(): Record<direction, Position[]> {
-        this.cached != undefined ? undefined : this.cached = { ...this.position.getDiagonalPositions(1), ...(this.position.getOrthogonalPositions(1))}
-        return this.cached
+    getMovements(): directionMap {
+        return this.position.getDiagonalPositions(1).merge(this.position.getOrthogonalPositions(1))
     }
 }
 
@@ -279,16 +118,3 @@ export const pieceFactory : { [type: string] : (player: number, column: string, 
     B: ( player: number, column: string, row:number ) => new Bishop(player, column, row)
 }
 
-// Dado una posicion, avanza tantos valores en filas y columnas
-function movementCalculator(pos : Position, col : number, row : number) {
-    
-    let newRow = pos.getRow() + row;
-    let newColumn = String.fromCharCode((pos.getColumn().charCodeAt(0) - col));
-   
-    if((newColumn >= "a" && newColumn <= "h") && (newRow >= 1 && newRow <= 8)){
-
-        let newPosition : Position = new Position(newColumn, newRow)
-        return newPosition
-    }     
-    return undefined;
-}
