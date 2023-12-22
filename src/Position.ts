@@ -3,8 +3,6 @@ import { logger } from "./logger";
 Important to note. Possible directions depend on positions.
 */
 
-
-
 class Position {
     column: string;
     row: number;
@@ -40,19 +38,7 @@ class Position {
 
 
 // Dado una posicion, avanza tantos valores en filas y columnas
-function movementCalculator(pos : Position, col : number, row : number) {
-    
-    let newRow = pos.getRow() + row;
-    let newColumn = String.fromCharCode((pos.getColumn().charCodeAt(0) - col));
-   
-    if((newColumn >= "a" && newColumn <= "h") && (newRow >= 1 && newRow <= 8)){
-
-        let newPosition : Position = new Position(newColumn, newRow)
-        return newPosition
-    }     
-    return undefined;
-}
 
 
-export { Position, movementCalculator };
+export { Position };
 
