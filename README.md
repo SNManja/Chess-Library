@@ -2,8 +2,6 @@
 
 Remade the overall class structures, making pieces less responsable and making the pieceState administrate the overall board state.
 
-At the time i dont have things clear on how i will structure the interface
-
 My goal with this project is to make a library or api, with the idea of implementing my own chess webpage in the future:
 * Database of historic matches
 * Ability to play online (via sockets)
