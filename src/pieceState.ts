@@ -1,34 +1,39 @@
 // This is a class made to encapsulate the state of the board as a type
 // So now, i can organize a little better the code, and simplify some error handling
 import { Position } from "./Position";
-import { logger } from "./logger";
 import { King, Piece, Rook } from "./pieces";
 
 export class pieceState {
-    state : Map<number, Piece>;
+    state : Map<number, Piece | null>;
 
     constructor() {
         this.state = new Map<number, Piece>();
     }
 
-    get(pos : Position) : Piece {
-        return this.state[pos.compareValue()];
+    get(pos : Position) : Piece | null {
+        try {
+            return this.state[pos.compareValue()];
+        } catch (e) {
+            console.error("pieceState get: ",e.message)
+        }
     }
 
     set(pos : Position, p : Piece) : void {
         try{
-            if(this.state[pos.compareValue()].getPlayer() == p.getPlayer()) throw new Error("Cant eat piece of same player");
+            if(this.state[pos.compareValue()] != null ? this.state[pos.compareValue()].getPlayer() == p.getPlayer() : false) throw new Error("Cant eat piece of same player");
             this.state[pos.compareValue()] = p;
         } catch(e){
-            logger.error("Invalid set:", e.message)
+            console.error("Invalid set:", e.message)
         }
     }
 
     del(pos : Position) : void {
         try{
+            if (this.state[pos.compareValue()] == null) throw new Error("No piece in that pos")
+            this.state[pos.compareValue()] = null;
             this.state.delete(pos.compareValue());
         } catch(e){
-            logger.error("Invalid del:", e.message)
+            console.error("Invalid del:", e.message)
         }
     }
 
@@ -36,8 +41,10 @@ export class pieceState {
         try {
             if(from.compareValue() == to.compareValue()) throw new Error("Same positions")
             if(this.get(from) == null) throw new Error("No piece in from position");
-            if(!this.validMoves(from).includes(to)) throw new Error("This is not a valid move")
-
+            const isValidMove = this.validMoves(from).find((pos) => {
+                return pos.compareValue() == to.compareValue();
+            })
+            if (!isValidMove)  throw new Error("This is not a valid move")
             const piece = this.get(from)
             if(piece.getType() == "K") { // Related to castling: Checks already have been made, so this is only responsible of the move itself 
                 if((piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "g"){  // Short castle - King side
@@ -64,7 +71,25 @@ export class pieceState {
             this.set(to, this.get(from)); 
             this.del(from);
         } catch(e){
-            logger.error("Invalid move:", e.message)
+            console.error("Invalid move:", e.message)
+        }
+    }
+
+    toMatrix() {
+        try {
+            const matrix = [];
+            for(let row=1 ; row <= 8 ; row++){
+                let colArr = [];
+                for(const col of ["a", "b", "c", "d", "e", "f", "g", "h"]){
+                    let thisPiece : Piece = this.get(new Position(col, row))
+                    colArr.push(thisPiece == null ? null : thisPiece.getType());
+                }
+                matrix.push(colArr);
+            }
+            return matrix;
+            
+        } catch (e) {
+            console.error("pieceState toMatrix: ",e.message)
         }
     }
 
@@ -97,7 +122,7 @@ export class pieceState {
             }
             return moves;
         } catch (e) {
-            logger.error("validMoves error:", e.message);
+            console.error("validMoves error:", e.message);
         }
     }
 

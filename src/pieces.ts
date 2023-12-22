@@ -77,7 +77,7 @@ class King extends Piece {
 }
 
 
-export const pieceFactory : { [type: string] : (player: number, column: string, row:number ) => Piece } = {
+export const pieceFactory : { [type: string] : (player: number) => Piece } = {
     K: ( player: number ) => new King(player),
     Q: ( player: number ) => new Queen(player),
     N: ( player: number ) => new Knight(player),

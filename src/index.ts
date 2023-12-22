@@ -1,7 +1,6 @@
 import { Board } from "./Board";
 import { PGNtranslator } from "./PGNTranslator";
 import { Position } from "./Position";
-import { logger } from "./logger";
 
 
 let xd = new PGNtranslator(`[Event "Live Chess"]
@@ -27,19 +26,28 @@ Nce4 16. Nxe4 Nxe4 17. Bc3 Bxc3 18. bxc3 Bf5 19. Qb3 Nc5 20. Qb4 Qc7 21. Bb5 a6
 
 let testBoard = new Board();
 
-let pos = new Position("b",1)
-let piece = testBoard.getPieceInPosition(pos)
+let position = new Position("a", 1);
+testBoard.setPiece(position, "R", 0);
+//testBoard.printState();
 
-logger.debug(piece.getType())
-logger.debug(testBoard.getMoves(pos))
+let validMoves = testBoard.validMoves(position);
+
+let newPosition = validMoves[6];
+testBoard.move(position, newPosition);
+position = newPosition;
+console.log("1st move")
+//testBoard.printState();
+
+console.log("2nd move")
+validMoves = testBoard.validMoves(position);
+newPosition = validMoves[2]
+testBoard.move(position, newPosition);
+testBoard.printState();
+
+console.log("Finished")
 
 
-let newPos = new Position("c",3)
 
-testBoard.moveTo(pos, newPos);
-
-console.log(testBoard.getState()) // TODO 
-// TODO - COLOCA EL setPiece al principio?!?!?
 
 
 
