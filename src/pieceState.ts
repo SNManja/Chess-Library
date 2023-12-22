@@ -82,7 +82,15 @@ export class pieceState {
                 let colArr = [];
                 for(const col of ["a", "b", "c", "d", "e", "f", "g", "h"]){
                     let thisPiece : Piece = this.get(new Position(col, row))
-                    colArr.push(thisPiece == null ? null : thisPiece.getType());
+                    if(thisPiece){
+                        if(thisPiece.getPlayer() == 1){
+                            colArr.push(thisPiece.getType().toLowerCase());
+                        } else {
+                            colArr.push(thisPiece.getType());
+                        }
+                    } else {
+                        colArr.push(null);
+                    }
                 }
                 matrix.push(colArr);
             }

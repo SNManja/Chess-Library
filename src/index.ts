@@ -27,7 +27,7 @@ Nce4 16. Nxe4 Nxe4 17. Bc3 Bxc3 18. bxc3 Bf5 19. Qb3 Nc5 20. Qb4 Qc7 21. Bb5 a6
 let testBoard = new Board();
 
 let position = new Position("a", 1);
-testBoard.setPiece(position, "R", 0);
+testBoard.setPiece(position, "R", 1);
 //testBoard.printState();
 
 let validMoves = testBoard.validMoves(position);

@@ -1,4 +1,5 @@
 import { Position } from "./Position";
+import { logger } from "./logger";
 import { pieceState } from "./pieceState";
 import { Piece, pieceFactory } from "./pieces";
 
@@ -21,12 +22,14 @@ class Board {
 
     printState(){
         let stateMatrix = this.getState();
+        logger.debug("  A B C D E F G H")
         for(let i = 0; i < stateMatrix.length; i++) {
-            let line = "";
+            let line = ""; line += i+1;
             for(let j = 0; j < stateMatrix[i].length; j++){
-                line += stateMatrix[i][j] == null ? "_" : stateMatrix[i][j];
+                line += " "
+                line += stateMatrix[i][j] == null ? "-" : stateMatrix[i][j];
             }
-            console.log(line);
+            logger.debug(line);
         }
     }
 
