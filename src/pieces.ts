@@ -46,7 +46,7 @@ class Rook  extends Piece {
         return "R"
     }
 
-    setMoved() : boolean{
+    setMoved() {
         this.moved = true;
     }
 
@@ -67,7 +67,7 @@ class King extends Piece {
         return "K"
     }
 
-    setMoved() : boolean{
+    setMoved() {
         this.moved = true;
     }
 
