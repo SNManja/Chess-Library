@@ -6,6 +6,7 @@ Important to note. Possible directions depend on positions.
 class Position {
     column: string;
     row: number;
+
     
     constructor(column: string, row: number){
         try {
@@ -33,6 +34,18 @@ class Position {
         // We have from a-h and as a secondary value 1-8
         return ((this.column.charCodeAt(0)-"a".charCodeAt(0)+1)*10  + this.row)
     }
+
+    static compareValueToPosition(value: number){
+        try {
+            if(value > 88) throw new Error("Compare value out of bounds");
+            let column = String.fromCharCode((value % 10) + "a".charCodeAt(0) - 1);
+            let row = value - (value % 10);
+            return new Position(column, row);
+        } catch (e) {
+            console.log("Position compareValueToPosition error: " + e.message);
+        }
+    }
+
 
 }
 
