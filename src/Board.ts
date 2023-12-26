@@ -54,7 +54,9 @@ class Board {
                 line += stateMatrix[i][j] == null ? "-" : stateMatrix[i][j];
             }
             logger.debug(line);
+            
         }
+        logger.debug(" ")
     }
 
     getPiece(pos: Position) : Piece {

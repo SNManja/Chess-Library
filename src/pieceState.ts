@@ -17,7 +17,7 @@ export class pieceState {
             if ( !pos ) throw new Error("No position given")
             return this.state[pos.compareValue()];
         } catch (e) {
-            console.error("pieceState get: ",e.message)
+            //console.error("pieceState get: ",e.message)
         }
     }
 
@@ -34,8 +34,7 @@ export class pieceState {
     del(pos : Position) : void {
         try{
             if (this.state[pos.compareValue()] == null) throw new Error("No piece in that pos")
-            this.state[pos.compareValue()] = null;
-            this.state.delete(pos.compareValue());
+            delete this.state[pos.compareValue()];
         } catch(e){
             console.error("Invalid del:", e.message)
         }
@@ -45,20 +44,20 @@ export class pieceState {
         try {
             if(from.compareValue() == to.compareValue()) throw new Error("Same positions")
             if(this.get(from) == null) throw new Error("No piece in from position");
-            const isValidMove = this.validMoves(from).find((pos) => {
+            const isValidMove = this.cache[from.compareValue()].find((pos) => {
                 return pos.compareValue() == to.compareValue();
             })
-            if (isValidMove)  throw new Error("This is not a valid move")
+            if (!isValidMove)  throw new Error("This is not a valid move")
             const piece = this.get(from)
             if(piece.getType() == "K") { // Related to castling: Checks already have been made, so this is only responsible of the move itself 
-                if((piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "g"){  // Short castle - King side
+                if(!(piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "g"){  // Short castle - King side
                     const KingRook = this.get(new Position("h",from.getRow()));
 
                     this.set(to, piece);  // Moves king
                     this.del(from);
                     this.set(new Position("f", from.getRow()), KingRook); // Moves rook
                     this.del(new Position("h",from.getRow()));
-                } else if((piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "c"){ // Long castle - Queen side
+                } else if(!(piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "c"){ // Long castle - Queen side
                     const KingRook = this.get(new Position("a",from.getRow()));
 
                     this.set(to, piece);  // Moves king
@@ -76,7 +75,7 @@ export class pieceState {
             this.del(from);
             this.updateCache();
         } catch(e){
-            console.error("Invalid move:", e.message)
+            console.error("pieceState move:", e.message)
         }
     }
 
@@ -107,7 +106,7 @@ export class pieceState {
     }
 
     getMoves(pos : Position) : Position[]{
-        let moves = this.updateCache[pos.compareValue()];
+        let moves = this.cache[pos.compareValue()];
         return moves
     }
 
@@ -150,7 +149,7 @@ export class pieceState {
         const direction = piece.getPlayer() == 1 ? -1 : 1;
 
         const inFront = movementCalculator(pos, 0,  1 * direction);
-        console.log("Pawn move checker: ", piece.getPlayer(), direction, inFront)
+        //console.log("Pawn move checker: ", piece.getPlayer(), direction, inFront)
         if(this.get(inFront) == null) validMoves.push(inFront);
 
         const side1 = movementCalculator(pos, 1, 1 * direction);
@@ -179,19 +178,20 @@ export class pieceState {
         let validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 2);
 
         if(!(piece as King).hasMoved()){
-            let KingRook = this.get(movementCalculator(pos, -3, 0))
-            let QueenRook = this.get(movementCalculator(pos, 4, 0))
-            if(KingRook.getType() == "R" && !(KingRook as Rook).hasMoved()){
+            let KingRook = this.get(movementCalculator(pos, -4, 0))
+            let QueenRook = this.get(movementCalculator(pos, 3, 0))
+            if(KingRook || KingRook.getType() == "R" && !(KingRook as Rook).hasMoved()){
                 if(this.get(movementCalculator(pos, -1, 0)) == null && this.get(movementCalculator(pos, -2, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
             }
-            if(QueenRook.getType() == "R" && !(QueenRook as Rook).hasMoved()){
+            if(QueenRook || QueenRook.getType() == "R" && !(QueenRook as Rook).hasMoved()){
                 if(this.get(movementCalculator(pos, 1, 0)) == null && this.get(movementCalculator(pos, 2, 0)) == null && this.get(movementCalculator(pos, 3, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
             }
         }
 
         if (filterParams) { // filtrates positions in param
-            validMoves.filter(PotentialKingPositions => {
-                return !(filterParams.has(PotentialKingPositions)) 
+            validMoves = validMoves.filter(PotentialKingPositions => {
+                //console.log("Potential move", PotentialKingPositions, !(filterParams.has(PotentialKingPositions) ))
+                return !(filterParams.has(PotentialKingPositions));
             })
         }
         return validMoves;
@@ -251,60 +251,67 @@ export class pieceState {
     }
 
     updateCache() : void {
-        this.cache = new Map<number, Position[]>();
-        let whiteKingPosition : Position;
-        let blackKingPosition : Position;
-
-        let whiteWatching : PositionSet = new PositionSet();
-        let blackWatching : PositionSet = new PositionSet();
-        
-        for (const [unparsedKey,value] of Object.entries(this.state)) {
-            let key  = Number.parseInt(unparsedKey);
-            let keyPosition = Position.compareValueToPosition(key);
-            if (value == null) {
-                logger.warn("update cache:  Passed a null value in key: ", key)
-            }
-            else if(value.getType() == "K"){
-                if (value.getPlayer() == 0) {
-                    whiteKingPosition = keyPosition;
-                }
-                if (value.getPlayer() == 1) blackKingPosition = keyPosition;
-            } else {
-                let validMovesForPosition = this.validMoves(keyPosition);
-                this.cache[keyPosition.compareValue()] = validMovesForPosition; 
-                if (value.getPlayer() == 0) whiteWatching.addArray(validMovesForPosition);
-                if (value.getPlayer() == 1) blackWatching.addArray(validMovesForPosition);
-            }
-        }
-        // Now i know what moves are invalid for the king, the ones that the other player is watching
-        if(whiteKingPosition == null) throw new Error("updateCache: No whiteKing found?");
-        if(blackKingPosition == null) throw new Error("updateCache: No blackKing found?");
-
-        this.cache[whiteKingPosition.compareValue()] = this.validKingMoves(whiteKingPosition, blackWatching);
-        this.cache[blackKingPosition.compareValue()] = this.validKingMoves(blackKingPosition, whiteWatching);
-
-        if (whiteWatching.has(blackKingPosition) || blackWatching.has(whiteKingPosition)) { // White checks black
-            let checkedPlayer = (whiteWatching.has(blackKingPosition)) ? 1 : 0;
-            let threats : Position[] = (whiteWatching.has(blackKingPosition)) ? this. backtrackThreats(blackKingPosition) : this. backtrackThreats(whiteKingPosition); 
-            let threatPaths : PositionSet= (whiteWatching.has(blackKingPosition)) ? this.backtrackThreatsPaths(blackKingPosition, threats) : this.backtrackThreatsPaths(whiteKingPosition, threats);
+        try{
+            this.cache = new Map<number, Position[]>();
+            let whiteKingPosition : Position;
+            let blackKingPosition : Position;
+    
+            let whiteWatching : PositionSet = new PositionSet();
+            let blackWatching : PositionSet = new PositionSet();
             
-            if(threats.length == 0) { 
-                throw new Error("updateCache: No threat found for black and white is watching the king")
-            } else if (threats.length >= 1){
-                for (const [unparsedKey , value] of Object.entries(this.state)) {
-                    let key  = Number.parseInt(unparsedKey);
-                    if (value.getPlayer() == checkedPlayer && value.getType() != "K"){
-                        if(threats.length == 1){
-                            this.cache[key] = this.cache[key].filter(p => {
-                                return (threatPaths.has(p))
-                            })
-                        } else {
-                            this.cache[key] = [];
+            for (const [unparsedKey,value] of Object.entries(this.state)) {
+                
+                let key  = Number.parseInt(unparsedKey);
+                let keyPosition = Position.compareValueToPosition(key);
+                if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing welll") 
+                if (value == null) {
+                    logger.warn("update cache:  Passed a null value in key: ", key)
+                }
+                else if(value.getType() == "K"){
+                    if (value.getPlayer() == 0) {
+                        whiteKingPosition = keyPosition;
+                    }
+                    if (value.getPlayer() == 1) blackKingPosition = keyPosition;
+                } else {
+                    let validMovesForPosition = this.validMoves(keyPosition);
+                    this.cache[keyPosition.compareValue()] = validMovesForPosition; 
+                    if (value.getPlayer() == 0) whiteWatching.addArray(validMovesForPosition);
+                    if (value.getPlayer() == 1) blackWatching.addArray(validMovesForPosition);
+                }
+            }
+            // Now i know what moves are invalid for the king, the ones that the other player is watching
+            if(whiteKingPosition == null) throw new Error("updateCache: No whiteKing found?");
+            if(blackKingPosition == null) throw new Error("updateCache: No blackKing found?");
+    
+            this.cache[whiteKingPosition.compareValue()] = this.validKingMoves(whiteKingPosition, blackWatching);
+            this.cache[blackKingPosition.compareValue()] = this.validKingMoves(blackKingPosition, whiteWatching);
+    
+            if (whiteWatching.has(blackKingPosition) || blackWatching.has(whiteKingPosition)) { // White checks black
+                let checkedPlayer = (whiteWatching.has(blackKingPosition)) ? 1 : 0;
+                let threats : Position[] = (whiteWatching.has(blackKingPosition)) ? this. backtrackThreats(blackKingPosition) : this. backtrackThreats(whiteKingPosition); 
+                let threatPaths : PositionSet= (whiteWatching.has(blackKingPosition)) ? this.backtrackThreatsPaths(blackKingPosition, threats) : this.backtrackThreatsPaths(whiteKingPosition, threats);
+                
+                if(threats.length == 0) { 
+                    throw new Error("updateCache: No threat found for black and white is watching the king")
+                } else if (threats.length >= 1){
+                    for (const [unparsedKey , value] of Object.entries(this.state)) {
+                        let key  = Number.parseInt(unparsedKey);
+                        if (value.getPlayer() == checkedPlayer && value.getType() != "K"){
+                            if(threats.length == 1){
+                                this.cache[key] = this.cache[key].filter(p => {
+                                    return (threatPaths.has(p))
+                                })
+                            } else {
+                                this.cache[key] = [];
+                            }
                         }
                     }
                 }
-            }
-        } 
+            } 
+
+        } catch (e) {
+            console.error("pieceState updateCache",e.message)
+        }
     }
 
     backtrackThreats(pos : Position) : Position[] { // This will be given a position of a piece, and return the threating enemies' position

@@ -1,6 +1,7 @@
 import { Board } from "./Board";
 import { PGNtranslator } from "./PGNTranslator";
 import { Position } from "./Position";
+import { logger } from "./logger";
 
 
 let xd = new PGNtranslator(`[Event "Live Chess"]
@@ -26,11 +27,22 @@ Nce4 16. Nxe4 Nxe4 17. Bc3 Bxc3 18. bxc3 Bf5 19. Qb3 Nc5 20. Qb4 Qc7 21. Bb5 a6
 
 let testBoard = new Board();
 
-let position = new Position("b", 7);
+let position = new Position("e", 2);
 testBoard.printState();
 
 let validMoves = testBoard.getMoves(position)
 console.log(validMoves);
+testBoard.move(position, new Position("e",3))
+testBoard.printState();
+
+testBoard.move( new Position("d",7),  new Position("d",6) );
+testBoard.printState();
+
+testBoard.move( new Position("c",8),  new Position("g",4) );
+testBoard.printState();
+
+logger.debug(testBoard.getMoves(new Position("d",1)))
+
 
 console.log("Finished")
 
