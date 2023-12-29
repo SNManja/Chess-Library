@@ -1,12 +1,12 @@
 // This is a class made to encapsulate the state of the board as a type
 // So now, i can organize a little better the code, and simplify some error handling
 import { Position } from "./Position";
-import { logger } from "./logger";
 import { King, Piece, Rook } from "./pieces";
 
 export class pieceState {
     state : Map<number, Piece | null>;
-    cache : Map<number, Position[]>
+    cache : Map<number, Position[]>;
+    result : string = "";
 
     constructor() {
         this.state = new Map<number, Piece>();
@@ -106,33 +106,37 @@ export class pieceState {
     }
 
     getMoves(pos : Position) : Position[]{
-        let moves = this.cache[pos.compareValue()];
-        return moves
+        try {
+            let moves = this.cache[pos.compareValue()];
+            return moves
+        } catch(e){
+            console.error("pieceState getMoves: ", e.message)
+        }
     }
 
-    private validMoves(pos : Position) : Position[] {
+    private validMoves(pos : Position, checkIfItsWatching=false ) : Position[] {
         try{
             let moves : Position[] = [];
             let piece = this.get(pos);
             if(piece == null) throw new Error("No piece at this position");
             switch(piece.getType()) {
                 case "P":
-                    moves = this.validPawnMoves(pos);
+                    moves = this.validPawnMoves(pos); // TODO , checkIfItsWatching
                     break;
                 case "N":
-                    moves = this.validKnightMoves(pos);
+                    moves = this.validKnightMoves(pos, checkIfItsWatching);
                     break;
                 case "B":
-                    moves = this.validBishopMoves(pos);
+                    moves = this.validBishopMoves(pos, checkIfItsWatching);
                     break;
                 case "R":
-                    moves = this.validRookMoves(pos);
+                    moves = this.validRookMoves(pos, checkIfItsWatching);
                     break;
                 case "Q":
-                    moves = this.validQueenMoves(pos);
+                    moves = this.validQueenMoves(pos, checkIfItsWatching);
                     break;
                 case "K":
-                    moves = this.validKingMoves(pos);
+                    moves = this.validKingMoves(pos); // TODO , checkIfItsWatching
                     break;
                 default:
                     throw new Error("Invalid piece type");
@@ -189,24 +193,29 @@ export class pieceState {
         }
 
         if (filterParams) { // filtrates positions in param
-            validMoves = validMoves.filter(PotentialKingPositions => {
-                //console.log("Potential move", PotentialKingPositions, !(filterParams.has(PotentialKingPositions) ))
-                return !(filterParams.has(PotentialKingPositions));
-            })
+            let filteredMoves = [];
+
+            for(const move of validMoves){
+                if(!filterParams.has(move)) filteredMoves.push(move);
+            }
+
+            console.log("king Filtered moves: ", filteredMoves);
+            return filteredMoves;
+            
         }
         return validMoves;
     }
     
-    private validKnightMoves(pos: Position): Position[] {
+    private validKnightMoves(pos: Position, checkIfItsWatching=false): Position[] {
         let validMoves : Position[] = [];
         for(const v1 of [2,-2]){
             for(const v2 of [1,-1]){
                 let newPos1 = movementCalculator(pos, v1, v2);
                 let newPos2 = movementCalculator(pos, v2, v1);
-                if(newPos1 && (this.get(newPos1) == null || this.get(pos).getPlayer() != this.get(newPos1).getPlayer())){
+                if(newPos1 && (this.get(newPos1) == null || this.get(pos).getPlayer() != this.get(newPos1).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
                     validMoves.push(newPos1);
                 }
-                if(newPos2 && (this.get(newPos2) == null || this.get(pos).getPlayer() != this.get(newPos2).getPlayer())){
+                if(newPos2 && (this.get(newPos2) == null || this.get(pos).getPlayer() != this.get(newPos2).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
                     validMoves.push(newPos2);
                 }
             }
@@ -214,22 +223,22 @@ export class pieceState {
         return validMoves;
     }
     
-    private validBishopMoves(pos: Position): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1]])
+    private validBishopMoves(pos: Position, checkIfItsWatching=false): Position[] {
+        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1]], 8, checkIfItsWatching)
         return validMoves;
     }
 
-    private validRookMoves(pos: Position): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[0,1],[0,-1],[1,0],[-1,0]])
+    private validRookMoves(pos: Position, checkIfItsWatching= false): Position[] {
+        const validMoves : Position[] = this.validateMoves(pos, [[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
         return validMoves
     }
 
-    private validQueenMoves(pos: Position): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]])
+    private validQueenMoves(pos: Position, checkIfItsWatching = false ): Position[] {
+        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
         return validMoves; //
     }
 
-    private validateMoves(pos: Position, combinations : number[][], range = 8) : Position[]{
+    private validateMoves(pos: Position, combinations : number[][], range = 8, checkIfItsWatching = false) : Position[]{
         let player = this.get(pos).getPlayer();
         let validMoves : Position[] = [];
         for(const combination of combinations){
@@ -240,7 +249,7 @@ export class pieceState {
                     validMoves.push(newPos); 
                     continue;
                 }
-                if(this.get(newPos).getPlayer() != player) {
+                if(this.get(newPos).getPlayer() != player || (checkIfItsWatching && this.get(newPos).getPlayer() == player)) {
                     validMoves.push(newPos)
                     break;
                 };
@@ -263,9 +272,9 @@ export class pieceState {
                 
                 let key  = Number.parseInt(unparsedKey);
                 let keyPosition = Position.compareValueToPosition(key);
-                if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing welll") 
+                if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing well") 
                 if (value == null) {
-                    logger.warn("update cache:  Passed a null value in key: ", key)
+                    console.warn("Passed a null value in key: ", key)
                 }
                 else if(value.getType() == "K"){
                     if (value.getPlayer() == 0) {
@@ -275,37 +284,54 @@ export class pieceState {
                 } else {
                     let validMovesForPosition = this.validMoves(keyPosition);
                     this.cache[keyPosition.compareValue()] = validMovesForPosition; 
-                    if (value.getPlayer() == 0) whiteWatching.addArray(validMovesForPosition);
-                    if (value.getPlayer() == 1) blackWatching.addArray(validMovesForPosition);
+                    if (value.getPlayer() == 0) whiteWatching.addArray(this.validMoves(keyPosition,true));
+                    if (value.getPlayer() == 1) blackWatching.addArray(this.validMoves(keyPosition,true));
                 }
             }
             // Now i know what moves are invalid for the king, the ones that the other player is watching
-            if(whiteKingPosition == null) throw new Error("updateCache: No whiteKing found?");
-            if(blackKingPosition == null) throw new Error("updateCache: No blackKing found?");
+            if(whiteKingPosition == null) throw new Error("No whiteKing found?");
+            if(blackKingPosition == null) throw new Error("No blackKing found?");
     
             this.cache[whiteKingPosition.compareValue()] = this.validKingMoves(whiteKingPosition, blackWatching);
             this.cache[blackKingPosition.compareValue()] = this.validKingMoves(blackKingPosition, whiteWatching);
     
             if (whiteWatching.has(blackKingPosition) || blackWatching.has(whiteKingPosition)) { // White checks black
+                
                 let checkedPlayer = (whiteWatching.has(blackKingPosition)) ? 1 : 0;
-                let threats : Position[] = (whiteWatching.has(blackKingPosition)) ? this. backtrackThreats(blackKingPosition) : this. backtrackThreats(whiteKingPosition); 
+                let threats : Position[] = (whiteWatching.has(blackKingPosition)) ? this.backtrackThreats(blackKingPosition) : this.backtrackThreats(whiteKingPosition); 
                 let threatPaths : PositionSet= (whiteWatching.has(blackKingPosition)) ? this.backtrackThreatsPaths(blackKingPosition, threats) : this.backtrackThreatsPaths(whiteKingPosition, threats);
                 
+                console.log("player checked: ", checkedPlayer)
+
+                let haveMovesOutsideOfKing : boolean = false;
                 if(threats.length == 0) { 
-                    throw new Error("updateCache: No threat found for black and white is watching the king")
-                } else if (threats.length >= 1){
+                    throw new Error("No threat found for black and white is watching the king")
+                } else if (threats.length >= 1){           
                     for (const [unparsedKey , value] of Object.entries(this.state)) {
                         let key  = Number.parseInt(unparsedKey);
                         if (value.getPlayer() == checkedPlayer && value.getType() != "K"){
+                            
                             if(threats.length == 1){
-                                this.cache[key] = this.cache[key].filter(p => {
-                                    return (threatPaths.has(p))
+                                
+                                let newCache = [];
+                                this.cache[key].forEach( (p : Position )=>{
+                                    
+                                    if(threatPaths.has(p)) {
+                                        newCache.push(p);
+                                    }
                                 })
+                                if(this.cache[key].length != newCache.length) this.cache[key] = newCache;
+                                
+                                if(this.cache[key].length > 0) haveMovesOutsideOfKing = true;
                             } else {
                                 this.cache[key] = [];
                             }
                         }
                     }
+                }
+
+                if(!haveMovesOutsideOfKing && this.cache[(checkedPlayer == 0 ? whiteKingPosition : blackKingPosition).compareValue()].length == 0) {
+                    this.end(checkedPlayer == 1 ? 0 : 1);
                 }
             } 
 
@@ -318,72 +344,121 @@ export class pieceState {
         // Maybe for this would be great to make a function to check if a position is in between 2 other ones
         // I can change the set with possible moves from each piece to a dictionary wich stores the piece that threats that position
         // This will save me of backtracking the enemy and its positions in between.
+        try {
 
-        let pieceInPosition = this.get(pos);
-        // I need to check 
-        // * diagonal lines
-        // * ortogonal lines
-        // * knights
+            let res : Position[] = [];
+            let pieceInPosition = this.get(pos);
+            // I need to check 
+            // * diagonal lines
+            // * ortogonal lines
+            // * knights
+    
+            let possibleKnights = this.validKnightMoves(pos)
+            let possibleBishops = this.validBishopMoves(pos)
+            let possibleRooks = this.validRookMoves(pos)
 
-        let possibleKnights = this.validKnightMoves(pos).filter( p => {
-            return this.get(p) != null && this.get(p).getType() == "N" && this.get(p).getPlayer() != pieceInPosition.getPlayer() ;
-        })
-        if (pieceInPosition.getType() == "K" && possibleKnights.length > 1) throw new Error("Multiple knights threatening one king")
 
-        let possibleBishops = this.validBishopMoves(pos).filter( p => { // This is really inneficient
-            return this.get(p) != null && this.get(p).getType() == "B" && this.get(p).getPlayer()!= pieceInPosition.getPlayer();
-        })
-        if (pieceInPosition.getType() == "B" && possibleBishops.length > 1) throw new Error("Multiple bishops threatening one king")
+            let checkValidThreats = (possible : Position[], type : string) => {
+                possible.forEach(p =>{
+                    let piece : Piece = this.get(p);
+                    if(!piece) return;
+                    let moreThanOne : boolean = false;
+                    let validateType;
+                    if(type == "K") validateType = piece.getType() == "K";
+                    if(type == "B") validateType = piece.getType() == "B" || piece.getType() == "Q" ;
+                    if(type == "R") validateType = piece.getType() == "R" || piece.getType() == "Q" ;
+                    if(piece!= null && validateType  && piece.getPlayer()!= pieceInPosition.getPlayer()){
+                        if (moreThanOne) {
+                            throw new Error(`Multiple pieces of the same type (${piece.getType()}) threatening one king`)
+                        } else {
+                            moreThanOne = true;
+                        }
+                        res.push(p)
+                    }
+                })
+            }
 
-        let possibleRooks = this.validRookMoves(pos).filter( p => { // This is really inneficient
-            return this.get(p) != null && this.get(p).getType() == "R" && this.get(p).getPlayer()!= pieceInPosition.getPlayer();
-        })
-        
-        return;
+            checkValidThreats(possibleKnights, "K");
+            checkValidThreats(possibleBishops, "B");
+            checkValidThreats(possibleRooks, "R");
+            console.log("Possible threats:")
+            console.log(res)
+            
+            return res;
+
+        } catch (e) {
+            console.error("pieceState backtrackThreats: " + e.message)
+        }
     }
 
-    backtrackThreatsPaths(pos : Position, threats : Position[]) : PositionSet {
-        let res = new PositionSet();
-        if(threats.length == 0){
-            throw new Error("backtrackThreatPaths: Zero threats why we got here.")
-        }
-        if(threats.length > 1){
-            return res; // Returns empty bc it doesnt matter when i have 2 threats
-        } else {
-            if (this.get(threats[0]).getType() == "K"){
-                res.add(threats[0])
-                return res;
+    backtrackThreatsPaths(kingPos : Position, threats : Position[]) : PositionSet {
+        try {
+            let res = new PositionSet();
+            if(threats.length == 0){
+                throw new Error("backtrackThreatPaths: Zero threats why we even got here.")
+            }
+            if(threats.length > 1){
+                return res; // Returns empty bc it doesnt matter when i have 2 threats
             } else {
-                let directions = [[1,1], [-1,1], [1,-1], [-1,-1],[1,0],[0,1],[-1,0],[0,-1]]
-                let storeDirections : Position[][] = [[],[],[],[],[],[],[],[]];
-                let checkDirections : boolean[];
-                checkDirections = this.get(threats[0]).getType() == "Q" ?  [true,true,true,true,true,true,true,true] : 
-                                        (this.get(threats[0]).getType() == "R" ? [false,false,false,false,true,true,true,true] : 
-                                                                                        [true,true,true,true,false,false,false,false])  
-                for(let i = 0; i < 8; i++) {
-                    for(let dirIndex = 0; dirIndex < directions.length; dirIndex++) {
-                        if(checkDirections[dirIndex] == false) continue;
-                        let calcPosition =  movementCalculator(threats[0], directions[dirIndex][0],directions[dirIndex][0])
-                        if(calcPosition != null) {
-                            checkDirections[dirIndex] = false;
-                            continue;
-                        }
-                        storeDirections[dirIndex].push(calcPosition);
-                        if(calcPosition.compareValue() == threats[0].compareValue()) {
-                            res.addArray(storeDirections[dirIndex]);
-                            return res
-                        }
-                        if(directions[dirIndex][0] != 0) {
-                            directions[dirIndex][0] += directions[dirIndex][0] > 0 ? 1 : -1
-                        }
-                        if(directions[dirIndex][1] != 0) {
-                            directions[dirIndex][1] += directions[dirIndex][1] > 0 ? 1 : -1
+                if (this.get(threats[0]).getType() == "K"){
+                    res.add(threats[0])
+                    return res;
+                } else {
+                    let directions = [[1,1], [-1,1], [1,-1], [-1,-1],[1,0],[0,1],[-1,0],[0,-1]]
+                    let storeDirections : Position[][] = [[],[],[],[],[],[],[],[]];
+                    let checkDirections : boolean[];
+                    console.log("Type of threat: " + this.get(threats[0]).getType())
+                    checkDirections = this.get(threats[0]).getType() == "Q" ?  [true,true,true,true,true,true,true,true] : 
+                                            (this.get(threats[0]).getType() == "R" ? [false,false,false,false,true,true,true,true] : 
+                                                                                            [true,true,true,true,false,false,false,false]) 
+                    for(let i = 1; i <= 8; i++) {
+
+                        for(let dirIndex = 0; dirIndex < directions.length; dirIndex++) {
+                            
+                            if(checkDirections[dirIndex] == false) continue;
+                            
+                            let calcPosition =  movementCalculator(threats[0], directions[dirIndex][0] * i,directions[dirIndex][1]* i)
+                            if(!calcPosition) {
+                                checkDirections[dirIndex] = false;
+                                continue;
+                            }
+
+                            if(directions[dirIndex][0] != 0) directions[dirIndex][0] += directions[dirIndex][0] > 0 ? 1 : -1
+                            
+                            if(directions[dirIndex][1] != 0) directions[dirIndex][1] += directions[dirIndex][1] > 0 ? 1 : -1
+                            
+                            storeDirections[dirIndex].push(calcPosition);
+                            
+                            if(calcPosition.compareValue() == kingPos.compareValue()) {
+                                res.addArray(storeDirections[dirIndex]);
+                                res.add(threats[0])
+                                console.log("Threat path: ",res)
+                                return res
+                            }
+
                         }
                     }
                 }
+                throw new Error("threat has not been found")
             }
-            throw new Error("threat has not been found")
+
+        } catch (e) {
+            console.error("pieceState backtrackThreatsPaths: " + e.message)
         }
+    }
+
+    end(winner : number) : void {
+        try{
+            if(!(winner == 0 || winner == 1 || winner == 0.5)) throw new Error("Invalid winner")
+            if(winner == 0) this.result = "white";
+            if(winner == 1) this.result = "black";
+            if(winner == 0.5) this.result = "tie";
+            delete this.cache;
+            console.log("game ended, winner is: ", winner)
+        } catch(e){
+            console.error("pieceState end: ", e.message)
+        }
+
     }
 
 

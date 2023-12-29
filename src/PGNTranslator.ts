@@ -2,7 +2,7 @@
 
 class PGNtranslator {
     headers : Map<string,string>;
-    movements;
+    movements ;
     exceptions;
     matchState;
 
