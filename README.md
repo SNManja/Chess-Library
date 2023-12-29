@@ -1,6 +1,7 @@
 # Chess-Library ♟
 
-First chess engine. The goal es to create a playable game start to end. In the long run, the idea is to make a chess website and maybe an ai. 
+First chess engine. Made all by intuition, for this project i will not focus in investigating how to build it, i want it to be an all self made challenge.
+What this means for the project? I will not implement any optimizations (like specifics algorithms, bitboards, etc). 
 
 My goal with this project is to make a library or api, with the idea of implementing my own chess webpage in the future:
 * Database of historic matches
