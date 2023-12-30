@@ -12,8 +12,11 @@ My goal with this project is to make a library or api, with the idea of implemen
 At the moment, whats made is:
 * Moves from each piece
 * Check detector, valid moves filter when checked. NEEDS TESTING
+* Turns, games now can end
 
 TODO:
-* Turns. This is simple to implement, but i didnt make it at the time because it's not needed for debugging at this stage
 * Pin detection (filtering moves which should be a suicide for the king)
+* En passant
+* Ties (stalemates, 50 move rule, threefold repetition). Im just lazy to do this, 
 * PGN translator, mainly for debugging purposes
+* MAYBE i do a simple user interface for debugging with comfort

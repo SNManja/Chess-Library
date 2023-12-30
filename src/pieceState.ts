@@ -194,12 +194,9 @@ export class pieceState {
 
         if (filterParams) { // filtrates positions in param
             let filteredMoves = [];
-
             for(const move of validMoves){
                 if(!filterParams.has(move)) filteredMoves.push(move);
             }
-
-            console.log("king Filtered moves: ", filteredMoves);
             return filteredMoves;
             
         }
@@ -274,7 +271,7 @@ export class pieceState {
                 let keyPosition = Position.compareValueToPosition(key);
                 if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing well") 
                 if (value == null) {
-                    console.warn("Passed a null value in key: ", key)
+                    throw new Error(`Passed a null value in key: ${key}`)
                 }
                 else if(value.getType() == "K"){
                     if (value.getPlayer() == 0) {
@@ -381,8 +378,6 @@ export class pieceState {
             checkValidThreats(possibleKnights, "K");
             checkValidThreats(possibleBishops, "B");
             checkValidThreats(possibleRooks, "R");
-            console.log("Possible threats:")
-            console.log(res)
             
             return res;
 
@@ -407,7 +402,6 @@ export class pieceState {
                     let directions = [[1,1], [-1,1], [1,-1], [-1,-1],[1,0],[0,1],[-1,0],[0,-1]]
                     let storeDirections : Position[][] = [[],[],[],[],[],[],[],[]];
                     let checkDirections : boolean[];
-                    console.log("Type of threat: " + this.get(threats[0]).getType())
                     checkDirections = this.get(threats[0]).getType() == "Q" ?  [true,true,true,true,true,true,true,true] : 
                                             (this.get(threats[0]).getType() == "R" ? [false,false,false,false,true,true,true,true] : 
                                                                                             [true,true,true,true,false,false,false,false]) 
@@ -432,7 +426,6 @@ export class pieceState {
                             if(calcPosition.compareValue() == kingPos.compareValue()) {
                                 res.addArray(storeDirections[dirIndex]);
                                 res.add(threats[0])
-                                console.log("Threat path: ",res)
                                 return res
                             }
 
@@ -454,7 +447,7 @@ export class pieceState {
             if(winner == 1) this.result = "black";
             if(winner == 0.5) this.result = "tie";
             delete this.cache;
-            console.log("game ended, winner is: ", winner)
+            console.log("Game ended, winner is: ", winner)
         } catch(e){
             console.error("pieceState end: ", e.message)
         }

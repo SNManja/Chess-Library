@@ -78,6 +78,14 @@ class Board {
 
     move(from: Position, to: Position) {
         try {
+            let fromPiece = this.pieceState.get(from)
+            if(!fromPiece) throw new Error(`No piece found in from position ${from}`)
+            let fromPiecePlayer = fromPiece.getPlayer()
+            if (fromPiecePlayer == 0 && this.turn % 2 == 1) {
+                throw new Error("It's Black's turn")
+            } else if (fromPiecePlayer == 1 && this.turn % 2 == 0) {
+                throw new Error("It's White's turn")
+            }
             this.pieceState.move(from, to);
             this.turn += 1;
             this.pieceState.updateCache();
