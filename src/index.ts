@@ -1,5 +1,5 @@
-import { Board } from "./Board";
-import { Position } from "./Position";
+import { Board } from "./board";
+import { Position } from "./position";
 
 
 let testBoard = new Board();
@@ -10,15 +10,7 @@ testBoard.printState();
 let validMoves = testBoard.getMoves(position)
 console.log(validMoves);
 testBoard.move(position, new Position("e",3))
-//testBoard.printState();
-
-testBoard.move( new Position("d",7),  new Position("d",6) );
-//testBoard.printState();
-
-
-console.debug("White king moves: ")
-console.debug(testBoard.getMoves(new Position("d",1)))
-
+testBoard.printState();
 
 console.log("Finished")
 

@@ -16,7 +16,9 @@ At the moment, whats made is:
 
 TODO:
 * Pin detection (filtering moves which should be a suicide for the king)
+* Fix castling
 * En passant
 * Ties (stalemates, 50 move rule, threefold repetition). Im just lazy to do this, 
 * PGN translator, mainly for debugging purposes
 * MAYBE i do a simple user interface for debugging with comfort
+* Promotion of pawns

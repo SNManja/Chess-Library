@@ -1,6 +1,6 @@
-import { Position } from "./Position";
 import { pieceState } from "./pieceState";
 import { Piece, pieceFactory } from "./pieces";
+import { Position } from "./position";
 
 class Board {
     pieceState : pieceState;
@@ -22,8 +22,8 @@ class Board {
         this.setPiece(new Position("a", 1), "R", 0); // White Rook
         this.setPiece(new Position("b", 1), "N", 0); // White Knight
         this.setPiece(new Position("c", 1), "B", 0); // White Bishop
-        this.setPiece(new Position("d", 1), "K", 0); // White Knight
-        this.setPiece(new Position("e", 1), "Q", 0); // White Queen
+        this.setPiece(new Position("d", 1), "Q", 0); // White Queen
+        this.setPiece(new Position("e", 1), "K", 0); // White Knight
         this.setPiece(new Position("f", 1), "B", 0); // White Bishop
         this.setPiece(new Position("g", 1), "N", 0); // White Knight 
         this.setPiece(new Position("h", 1), "R", 0); // White Rook
@@ -31,8 +31,8 @@ class Board {
         this.setPiece(new Position("a", 8), "R", 1); // Black Rook
         this.setPiece(new Position("b", 8), "N", 1); // Black Knight
         this.setPiece(new Position("c", 8), "B", 1); // Black Bishop
-        this.setPiece(new Position("d", 8), "K", 1); // Black Knight
-        this.setPiece(new Position("e", 8), "Q", 1); // Black Queen
+        this.setPiece(new Position("d", 8), "Q", 1); // Black Queen
+        this.setPiece(new Position("e", 8), "K", 1); // Black Knight
         this.setPiece(new Position("f", 8), "B", 1); // Black Bishop
         this.setPiece(new Position("g", 8), "N", 1); // Black Knight 
         this.setPiece(new Position("h", 8), "R", 1); // Black Rook
@@ -92,6 +92,11 @@ class Board {
         } catch(e){
             console.log("Board move: ", e.message);
         }
+    }
+
+    getResult() : string {
+        if(this.pieceState.result == "") return "ongoing";
+        else return this.pieceState.result;
     }
 
 }

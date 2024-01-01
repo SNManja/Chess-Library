@@ -1,7 +1,7 @@
 // This is a class made to encapsulate the state of the board as a type
 // So now, i can organize a little better the code, and simplify some error handling
-import { Position } from "./Position";
 import { King, Piece, Rook } from "./pieces";
+import { Position } from "./position";
 
 export class pieceState {
     state : Map<number, Piece | null>;
@@ -42,13 +42,19 @@ export class pieceState {
 
     move(from : Position, to : Position) : void {
         try {
+            if(!from) throw new Error("From position is undefined");
+            if(!to) throw new Error("To position is undefined");
+            const piece = this.get(from)
+            if(!piece) throw new Error(`No piece in from position ${from}`);
+            if(this.get(to) && this.get(to).getPlayer() === piece.getPlayer()) throw new Error("Both positions have pieces of the same player")
             if(from.compareValue() == to.compareValue()) throw new Error("Same positions")
             if(this.get(from) == null) throw new Error("No piece in from position");
-            const isValidMove = this.cache[from.compareValue()].find((pos) => {
+            console.log(`This piece, ${from}, cache: `,this.cache[from.compareValue()])
+            const isValidMove = this.cache[from.compareValue()].find((pos : Position) => {
                 return pos.compareValue() == to.compareValue();
             })
-            if (!isValidMove)  throw new Error("This is not a valid move")
-            const piece = this.get(from)
+            if (isValidMove == undefined)  throw new Error("This is not a valid move")
+            
             if(piece.getType() == "K") { // Related to castling: Checks already have been made, so this is only responsible of the move itself 
                 if(!(piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "g"){  // Short castle - King side
                     const KingRook = this.get(new Position("h",from.getRow()));
@@ -270,8 +276,8 @@ export class pieceState {
                 let key  = Number.parseInt(unparsedKey);
                 let keyPosition = Position.compareValueToPosition(key);
                 if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing well") 
-                if (value == null) {
-                    throw new Error(`Passed a null value in key: ${key}`)
+                if (value == undefined || value == null``) {
+                    throw new Error(`Passed a null or undef value in key: ${key}`)
                 }
                 else if(value.getType() == "K"){
                     if (value.getPlayer() == 0) {
@@ -286,8 +292,8 @@ export class pieceState {
                 }
             }
             // Now i know what moves are invalid for the king, the ones that the other player is watching
-            if(whiteKingPosition == null) throw new Error("No whiteKing found?");
-            if(blackKingPosition == null) throw new Error("No blackKing found?");
+            if(!whiteKingPosition) throw new Error("No whiteKing found?");
+            if(!blackKingPosition) throw new Error("No blackKing found?");
     
             this.cache[whiteKingPosition.compareValue()] = this.validKingMoves(whiteKingPosition, blackWatching);
             this.cache[blackKingPosition.compareValue()] = this.validKingMoves(blackKingPosition, whiteWatching);
@@ -333,7 +339,7 @@ export class pieceState {
             } 
 
         } catch (e) {
-            console.error("pieceState updateCache",e.message)
+            console.error(`pieceState updateCache pos:, `,e.message)
         }
     }
 
