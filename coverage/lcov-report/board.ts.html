@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.41% </span>
+                <span class="strong">76.31% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>81/106</span>
+                <span class='fraction'>87/114</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">60% </span>
+                <span class="strong">56.25% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>9/15</span>
+                <span class='fraction'>9/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">76.41% </span>
+                <span class="strong">76.31% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>81/106</span>
+                <span class='fraction'>87/114</span>
             </div>
         
             
@@ -170,7 +170,16 @@
 <a name='L105'></a><a href='#L105'>105</a>
 <a name='L106'></a><a href='#L106'>106</a>
 <a name='L107'></a><a href='#L107'>107</a>
-<a name='L108'></a><a href='#L108'>108</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -210,6 +219,10 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -229,6 +242,9 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">5x</span>
@@ -291,31 +307,36 @@ class Board {
     }
     
     createNewBoard(){
-        this.pieceState = new pieceState();
-        for(const col of ["a", "b", "c", "d", "e", "f", "g", "h"]){
-            let whitePos = new Position(col, 2);
-            let blackPos = new Position(col, 7);
-            this.setPiece(whitePos, "P", 0)
-            this.setPiece(blackPos, "P", 1)
-        }
-        this.setPiece(new Position("a", 1), "R", 0); // White Rook
-        this.setPiece(new Position("b", 1), "N", 0); // White Knight
-        this.setPiece(new Position("c", 1), "B", 0); // White Bishop
-        this.setPiece(new Position("d", 1), "Q", 0); // White Queen
-        this.setPiece(new Position("e", 1), "K", 0); // White Knight
-        this.setPiece(new Position("f", 1), "B", 0); // White Bishop
-        this.setPiece(new Position("g", 1), "N", 0); // White Knight 
-        this.setPiece(new Position("h", 1), "R", 0); // White Rook
+        try{
+            this.pieceState = new pieceState();
+            for(const col of ["a", "b", "c", "d", "e", "f", "g", "h"]){
+                let whitePos = new Position(col, 2);
+                let blackPos = new Position(col, 7);
+                this.setPiece(whitePos, "P", 0)
+                this.setPiece(blackPos, "P", 1)
+            }
+            this.setPiece(new Position("a", 1), "R", 0); // White Rook
+            this.setPiece(new Position("b", 1), "N", 0); // White Knight
+            this.setPiece(new Position("c", 1), "B", 0); // White Bishop
+            this.setPiece(new Position("d", 1), "Q", 0); // White Queen
+            this.setPiece(new Position("e", 1), "K", 0); // White Knight
+            this.setPiece(new Position("f", 1), "B", 0); // White Bishop
+            this.setPiece(new Position("g", 1), "N", 0); // White Knight 
+            this.setPiece(new Position("h", 1), "R", 0); // White Rook
 &nbsp;
-        this.setPiece(new Position("a", 8), "R", 1); // Black Rook
-        this.setPiece(new Position("b", 8), "N", 1); // Black Knight
-        this.setPiece(new Position("c", 8), "B", 1); // Black Bishop
-        this.setPiece(new Position("d", 8), "Q", 1); // Black Queen
-        this.setPiece(new Position("e", 8), "K", 1); // Black Knight
-        this.setPiece(new Position("f", 8), "B", 1); // Black Bishop
-        this.setPiece(new Position("g", 8), "N", 1); // Black Knight 
-        this.setPiece(new Position("h", 8), "R", 1); // Black Rook
-        this.pieceState.updateCache();
+            this.setPiece(new Position("a", 8), "R", 1); // Black Rook
+            this.setPiece(new Position("b", 8), "N", 1); // Black Knight
+            this.setPiece(new Position("c", 8), "B", 1); // Black Bishop
+            this.setPiece(new Position("d", 8), "Q", 1); // Black Queen
+            this.setPiece(new Position("e", 8), "K", 1); // Black Knight
+            this.setPiece(new Position("f", 8), "B", 1); // Black Bishop
+            this.setPiece(new Position("g", 8), "N", 1); // Black Knight 
+            this.setPiece(new Position("h", 8), "R", 1); // Black Rook
+            this.pieceState.updateCache();
+        } <span class="branch-0 cbranch-no" title="branch not covered" >catch (e) {</span>
+<span class="cstat-no" title="statement not covered" >            console.error("Board createNewBoard: ", e.message)</span>
+<span class="cstat-no" title="statement not covered" >        }</span>
+        
     }
 &nbsp;
 <span class="fstat-no" title="function not covered" >    getState(){</span>
@@ -337,12 +358,15 @@ class Board {
 <span class="cstat-no" title="statement not covered" >        console.log(" ")</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 &nbsp;
+    
+&nbsp;
+&nbsp;
     getPiece(pos: Position) : Piece {
         return this.pieceState.get(pos);
     }
 &nbsp;
 &nbsp;
-    setPiece(pos: Position, pieceType, player : number) {
+    setPiece(pos : Position, pieceType : string, player : number) : void {
         try {
             let piece : Piece= pieceFactory[pieceType](player)
             this.pieceState.set(pos, piece);
@@ -391,7 +415,7 @@ export { Board };
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2024-01-01T15:29:19.551Z
+                at 2024-01-05T06:46:24.785Z
             </div>
         <script src="prettify.js"></script>
         <script>

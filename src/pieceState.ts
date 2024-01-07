@@ -10,6 +10,7 @@ export class pieceState {
 
     constructor() {
         this.state = new Map<number, Piece>();
+        this.cache = new Map<number, Position[]>();
     }
 
     get(pos : Position) : Piece | null {
@@ -25,7 +26,8 @@ export class pieceState {
         try{
             if(this.state[pos.compareValue()] ? this.state[pos.compareValue()].getPlayer() == p.getPlayer() : false) throw new Error("Cant eat piece of same player");
             this.state[pos.compareValue()] = p;
-            this.cache = new Map<number,Position[]>();
+            if(this.state[pos.compareValue()] == undefined) throw new Error("Nothing was setted?")
+            this.cache[pos.compareValue()] = new Map<number, Position[]>();
         } catch(e){
             console.error("pieceState set: ", e.message)
         }
@@ -44,16 +46,25 @@ export class pieceState {
         try {
             if(!from) throw new Error("From position is undefined");
             if(!to) throw new Error("To position is undefined");
+
             const piece = this.get(from)
             if(!piece) throw new Error(`No piece in from position ${from}`);
             if(this.get(to) && this.get(to).getPlayer() === piece.getPlayer()) throw new Error("Both positions have pieces of the same player")
             if(from.compareValue() == to.compareValue()) throw new Error("Same positions")
             if(this.get(from) == null) throw new Error("No piece in from position");
-            console.log(`This piece, ${from}, cache: `,this.cache[from.compareValue()])
-            const isValidMove = this.cache[from.compareValue()].find((pos : Position) => {
-                return pos.compareValue() == to.compareValue();
-            })
-            if (isValidMove == undefined)  throw new Error("This is not a valid move")
+
+
+            let isValidMove = false;
+            
+            if(this.cache[from.compareValue()] == undefined) throw new Error("Cache is empty? This should not be possible");
+            this.cache[from.compareValue()].forEach((pos : Position) => {
+                if(pos.compareValue() == to.compareValue()) {
+                    isValidMove = true;
+                }
+            });
+
+
+            if (isValidMove == false)  throw new Error("This is not a valid move")
             
             if(piece.getType() == "K") { // Related to castling: Checks already have been made, so this is only responsible of the move itself 
                 if(!(piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "g"){  // Short castle - King side
@@ -63,6 +74,7 @@ export class pieceState {
                     this.del(from);
                     this.set(new Position("f", from.getRow()), KingRook); // Moves rook
                     this.del(new Position("h",from.getRow()));
+                    return;
                 } else if(!(piece as King).hasMoved() && from.getColumn() == "e" && to.getColumn() == "c"){ // Long castle - Queen side
                     const KingRook = this.get(new Position("a",from.getRow()));
 
@@ -70,10 +82,11 @@ export class pieceState {
                     this.del(from);
                     this.set(new Position("d", from.getRow()), KingRook); // Moves rook
                     this.del(new Position("a",from.getRow()));
+                    return;
                 }
                 (piece as King).setMoved();
-            }
-            if(piece.getType() == "R") { 
+            }  
+            if (piece.getType() == "R") { 
                 (piece as Rook).setMoved();
             }
 
@@ -114,6 +127,7 @@ export class pieceState {
     getMoves(pos : Position) : Position[]{
         try {
             let moves = this.cache[pos.compareValue()];
+            if (moves) throw new Error("Moves not found in cache")
             return moves
         } catch(e){
             console.error("pieceState getMoves: ", e.message)
@@ -154,112 +168,132 @@ export class pieceState {
     }
 
     private validPawnMoves(pos: Position): Position[] {
-        let validMoves : Position[] = [];
-        let piece : Piece = this.get(pos);
-        const direction = piece.getPlayer() == 1 ? -1 : 1;
+        try{
+            let validMoves : Position[] = [];
+            let piece : Piece = this.get(pos);
+            const direction = piece.getPlayer() == 1 ? -1 : 1;
 
-        const inFront = movementCalculator(pos, 0,  1 * direction);
-        //console.log("Pawn move checker: ", piece.getPlayer(), direction, inFront)
-        if(this.get(inFront) == null) validMoves.push(inFront);
+            const inFront = movementCalculator(pos, 0,  1 * direction);
+            //console.log("Pawn move checker: ", piece.getPlayer(), direction, inFront)
+            if(this.get(inFront) == null) validMoves.push(inFront);
 
-        const side1 = movementCalculator(pos, 1, 1 * direction);
-        if(this.get(side1) != null && this.get(side1).getPlayer() != piece.getPlayer())  validMoves.push(side1)
-        const side2 = movementCalculator(pos, -1,1 * direction);
-        if(this.get(side2) != null && this.get(side2).getPlayer() != piece.getPlayer())  validMoves.push(side2)
-        
-        if(piece.getPlayer() == 0) {
-            if(pos.getRow() == 2 && validMoves.includes(inFront)) {
-                const doubleFront = movementCalculator(pos,0,2 * direction);
-                if(this.get(doubleFront) == null) validMoves.push(doubleFront);
+            const side1 = movementCalculator(pos, 1, 1 * direction);
+            if(this.get(side1) != null && this.get(side1).getPlayer() != piece.getPlayer())  validMoves.push(side1)
+            const side2 = movementCalculator(pos, -1,1 * direction);
+            if(this.get(side2) != null && this.get(side2).getPlayer() != piece.getPlayer())  validMoves.push(side2)
+            
+            if(piece.getPlayer() == 0) {
+                if(pos.getRow() == 2 && validMoves.includes(inFront)) {
+                    const doubleFront = movementCalculator(pos,0,2 * direction);
+                    if(this.get(doubleFront) == null) validMoves.push(doubleFront);
+                }
+            } else {
+                if(pos.getRow() == 7 && validMoves.includes(inFront)) {
+                    const doubleFront = movementCalculator(pos,0,2 * direction);
+                    if(this.get(doubleFront) == null) validMoves.push(doubleFront);
+                }
             }
-        } else {
-            if(pos.getRow() == 7 && validMoves.includes(inFront)) {
-                const doubleFront = movementCalculator(pos,0,2 * direction);
-                if(this.get(doubleFront) == null) validMoves.push(doubleFront);
-            }
+
+            return validMoves;
+        } catch (e){
+            console.error("pieceState validPawnMoves: " + e.message);
         }
-
-        return validMoves;
+        
     }
      
     private validKingMoves(pos: Position, filterParams : PositionSet = undefined): Position[] { // Need to make sure king doesnt kill himself
-        let piece : Piece = this.get(pos);
+        try {
+            let piece : Piece = this.get(pos);
 
-        let validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 2);
+            let validMoves : Position[] = this.validateCombinationOfMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 2);
 
-        if(!(piece as King).hasMoved()){
-            let KingRook = this.get(movementCalculator(pos, -4, 0))
-            let QueenRook = this.get(movementCalculator(pos, 3, 0))
-            if(KingRook || KingRook.getType() == "R" && !(KingRook as Rook).hasMoved()){
-                if(this.get(movementCalculator(pos, -1, 0)) == null && this.get(movementCalculator(pos, -2, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
+            if(!(piece as King).hasMoved()){
+                let KingRook = this.get(movementCalculator(pos, -4, 0))
+                let QueenRook = this.get(movementCalculator(pos, 3, 0))
+                if(KingRook || KingRook.getType() == "R" && !(KingRook as Rook).hasMoved()){
+                    if(this.get(movementCalculator(pos, -1, 0)) == null && this.get(movementCalculator(pos, -2, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
+                }
+                if(QueenRook || QueenRook.getType() == "R" && !(QueenRook as Rook).hasMoved()){
+                    if(this.get(movementCalculator(pos, 1, 0)) == null && this.get(movementCalculator(pos, 2, 0)) == null && this.get(movementCalculator(pos, 3, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
+                }
             }
-            if(QueenRook || QueenRook.getType() == "R" && !(QueenRook as Rook).hasMoved()){
-                if(this.get(movementCalculator(pos, 1, 0)) == null && this.get(movementCalculator(pos, 2, 0)) == null && this.get(movementCalculator(pos, 3, 0)) == null) validMoves.push(movementCalculator(pos, -2, 0));
+
+            if (filterParams) { // filtrates positions in param
+                let filteredMoves = [];
+                for(const move of validMoves){
+                    if(!filterParams.has(move)) filteredMoves.push(move);
+                }
+                return filteredMoves;
+                
             }
+            return validMoves;
+        } catch(e){
+            console.error("pieceState validKingMoves: " + e.message)
         }
-
-        if (filterParams) { // filtrates positions in param
-            let filteredMoves = [];
-            for(const move of validMoves){
-                if(!filterParams.has(move)) filteredMoves.push(move);
-            }
-            return filteredMoves;
-            
-        }
-        return validMoves;
+        
     }
     
     private validKnightMoves(pos: Position, checkIfItsWatching=false): Position[] {
-        let validMoves : Position[] = [];
-        for(const v1 of [2,-2]){
-            for(const v2 of [1,-1]){
-                let newPos1 = movementCalculator(pos, v1, v2);
-                let newPos2 = movementCalculator(pos, v2, v1);
-                if(newPos1 && (this.get(newPos1) == null || this.get(pos).getPlayer() != this.get(newPos1).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
-                    validMoves.push(newPos1);
-                }
-                if(newPos2 && (this.get(newPos2) == null || this.get(pos).getPlayer() != this.get(newPos2).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
-                    validMoves.push(newPos2);
+        try {
+            let validMoves : Position[] = [];
+            for(const v1 of [2,-2]){
+                for(const v2 of [1,-1]){
+                    let newPos1 = movementCalculator(pos, v1, v2);
+                    let newPos2 = movementCalculator(pos, v2, v1);
+                    if(newPos1 && (this.get(newPos1) == null || this.get(pos).getPlayer() != this.get(newPos1).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
+                        validMoves.push(newPos1);
+                    }
+                    if(newPos2 && (this.get(newPos2) == null || this.get(pos).getPlayer() != this.get(newPos2).getPlayer() || (checkIfItsWatching && this.get(pos).getPlayer() == this.get(newPos1).getPlayer() ))){
+                        validMoves.push(newPos2);
+                    }
                 }
             }
+            return validMoves;
+        } catch (e) {
+            console.error("pieceState validKnightMoves: "+ e.message)
         }
-        return validMoves;
+
     }
     
     private validBishopMoves(pos: Position, checkIfItsWatching=false): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1]], 8, checkIfItsWatching)
+        const validMoves : Position[] = this.validateCombinationOfMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1]], 8, checkIfItsWatching)
         return validMoves;
     }
 
     private validRookMoves(pos: Position, checkIfItsWatching= false): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
+        const validMoves : Position[] = this.validateCombinationOfMoves(pos, [[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
         return validMoves
     }
 
     private validQueenMoves(pos: Position, checkIfItsWatching = false ): Position[] {
-        const validMoves : Position[] = this.validateMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
+        const validMoves : Position[] = this.validateCombinationOfMoves(pos, [[1,1],[1,-1],[-1,1],[-1,-1],[0,1],[0,-1],[1,0],[-1,0]], 8, checkIfItsWatching)
         return validMoves; //
     }
 
-    private validateMoves(pos: Position, combinations : number[][], range = 8, checkIfItsWatching = false) : Position[]{
-        let player = this.get(pos).getPlayer();
-        let validMoves : Position[] = [];
-        for(const combination of combinations){
-            for(let i = 1; i < range; i++){
-                const newPos = movementCalculator(pos, combination[0] * i, combination[1] * i)
-                if(!newPos) break;
-                if(this.get(newPos) == null) {
-                    validMoves.push(newPos); 
-                    continue;
-                }
-                if(this.get(newPos).getPlayer() != player || (checkIfItsWatching && this.get(newPos).getPlayer() == player)) {
-                    validMoves.push(newPos)
+    private validateCombinationOfMoves(pos: Position, combinations : number[][], range = 8, checkIfItsWatching = false) : Position[]{
+        try{
+            let player = this.get(pos).getPlayer();
+            let validMoves : Position[] = [];
+            for(const combination of combinations){
+                for(let i = 1; i < range; i++){
+                    const newPos = movementCalculator(pos, combination[0] * i, combination[1] * i)
+                    if(!newPos) break;
+                    if(this.get(newPos) == null) {
+                        validMoves.push(newPos); 
+                        continue;
+                    }
+                    if(this.get(newPos).getPlayer() != player || (checkIfItsWatching && this.get(newPos).getPlayer() == player)) {
+                        validMoves.push(newPos)
+                        break;
+                    };
                     break;
-                };
-                break;
+                }
             }
+            return validMoves;
+        } catch (e) {
+            console.error("pieceState validateCombinationOfMoves:", e.message)
         }
-        return validMoves;
+
     }
 
     updateCache() : void {
@@ -276,10 +310,10 @@ export class pieceState {
                 let key  = Number.parseInt(unparsedKey);
                 let keyPosition = Position.compareValueToPosition(key);
                 if(key && !keyPosition) throw new Error("compareValueToPosition Not parsing well") 
-                if (value == undefined || value == null``) {
+                if (value == undefined || value == null) {
                     throw new Error(`Passed a null or undef value in key: ${key}`)
                 }
-                else if(value.getType() == "K"){
+                if(value.getType() == "K"){
                     if (value.getPlayer() == 0) {
                         whiteKingPosition = keyPosition;
                     }
@@ -312,6 +346,9 @@ export class pieceState {
                 } else if (threats.length >= 1){           
                     for (const [unparsedKey , value] of Object.entries(this.state)) {
                         let key  = Number.parseInt(unparsedKey);
+                        if (value == undefined || value == null) {
+                            throw new Error(`Passed a null or undef value in key: ${key}`)
+                        }
                         if (value.getPlayer() == checkedPlayer && value.getType() != "K"){
                             
                             if(threats.length == 1){
@@ -339,7 +376,7 @@ export class pieceState {
             } 
 
         } catch (e) {
-            console.error(`pieceState updateCache pos:, `,e.message)
+            console.error(`pieceState updateCache: `, e.message)
         }
     }
 
@@ -474,10 +511,15 @@ class PositionSet {
         this.set.add(pos.compareValue());
     }
 
-    addArray(pos : Position[]) : void {
-        for(const p of pos){
-            this.set.add(p.compareValue());
+    addArray(positions : Position[]) : void {
+        try{
+            for(const p of positions){
+                this.set.add(p.compareValue());
+            }
+        } catch(e){
+            console.error("addArray: ", e.message)
         }
+        
     }
 
     remove(pos : Position) : void {

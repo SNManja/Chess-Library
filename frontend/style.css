@@ -1,0 +1,72 @@
+:root {
+    --white-square: rgba(238,238,210,255);
+    --black-square: rgba(118,150,86,255);
+}
+
+body {
+    background-color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    counter-reset: item-number;
+    font-family: sans-serif;
+}
+
+
+#board {
+    position: absolute;
+    bottom: 60px;
+
+    background-color: #222222;
+    width: 810px;
+    height:  810px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.board-row {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: row;
+    align-items: center;
+}
+
+.board-row::before {
+    color: white;
+    position: absolute;
+    left: -20px;
+    content: counter(item-number) ".";
+    counter-increment: item-number;
+
+}
+.board-row > row-1::before {
+    color: white;
+    z-index: 1;
+    position: absolute;
+    top: 0px;
+    content: counter(item-letter) ".";
+    counter-increment: item-number;
+}
+
+.board-square {
+    background: var(--white-square);
+    width: 100px;
+    height: 100px;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+.board-square > img {
+    width: 95%;
+    height: 95%;
+}
+
+.black-square {
+    background: var(--black-square);
+}
