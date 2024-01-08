@@ -30,7 +30,7 @@ body {
 .board-row {
 
     display: flex;
-    flex-direction: row;
+    flex-direction: row-reverse;
     justify-content: row;
     align-items: center;
 }
@@ -70,3 +70,4 @@ body {
 .black-square {
     background: var(--black-square);
 }
+
