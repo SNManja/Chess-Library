@@ -11,10 +11,7 @@ console.log("JS workin");
 
 
 
-const Board = new DOMBoard("rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq - 0 1");
-
-let stateString = FEN.getState()
-console.log(stateString);
+const Board = new DOMBoard("rnbqkbnr/ppp1pppp/8/3p4/2P5/8/PP1PPPPP/RNBQKBNR w KQkq - 0 2");
 
 
 

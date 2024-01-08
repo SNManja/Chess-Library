@@ -1,0 +1,5 @@
+Lo mas probable es que el frontend no tenga capacidad alguna de comprender/pensar movimientos correctos.
+El ajedrez se representa por el estado del tablero (FEN) y lista de movimientos validos a hacer en el turno.
+Para no repetir analisis de posiciones puedo hacer memoizacion del FEN, movimientos validos.
+A esto mas adelante se le puede incluso atar analisis y libraria la necesidad de recalcular posiciones (eso si alguna vez armo al ia) 
+

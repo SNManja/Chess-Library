@@ -1,5 +1,5 @@
-import { Board } from "./board";
-import { Position } from "./position";
+import { Board } from "../chess-library/board";
+import { Position } from "../chess-library/position";
 
 
 let testBoard = new Board();

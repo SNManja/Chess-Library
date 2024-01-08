@@ -8,7 +8,7 @@ class FENparser {
         try {
             const FENsplit = FENstring.split(" ");
             this.state = this.parseState(FENsplit[0]);
-            if(FENstring[1] == "-" || FENstring[1] == "w" || FENstring[1] == "b") turn = FENstring[1];
+            if(FENsplit[1] == "-" || FENsplit[1] == "w" || FENsplit[1] == "b") this.turn = FENsplit[1];
             this.castling = FENstring[FENsplit[2]];
             this.fiftyRule = FENstring[3];
 

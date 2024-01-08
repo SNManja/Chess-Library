@@ -22,7 +22,7 @@ body {
     height:  810px;
 
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     justify-content: center;
     align-items: center;
 }
@@ -30,7 +30,7 @@ body {
 .board-row {
 
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
     justify-content: row;
     align-items: center;
 }
@@ -69,5 +69,17 @@ body {
 
 .black-square {
     background: var(--black-square);
+}
+
+.move-square {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100px;
+    height: 100px;
+    background-color: red;
+    opacity: 0.5;
+   
+    /* No need for z-index here as it's already within the square */
 }
 
