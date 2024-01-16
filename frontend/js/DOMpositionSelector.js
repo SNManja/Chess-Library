@@ -10,3 +10,4 @@ function DOMpositionSelector(column, row) {
 }
 
 export { DOMpositionSelector }
+
